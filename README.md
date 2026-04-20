@@ -1,1 +1,1 @@
-# MAHJ MAHJ App
+# MAHJ MAHJ Website
