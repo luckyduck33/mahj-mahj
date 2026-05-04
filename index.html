@@ -71,12 +71,16 @@ input,select{font-family:inherit}
   z-index:50;
 }
 .topbar-logo{
-  font-family:var(--h-font);
-  font-weight:900;
-  font-size:15px;
-  letter-spacing:-.01em;
-  color:var(--green);
-  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  height:36px;
+}
+.topbar-logo img{
+  height:32px;
+  width:auto;
+  max-width:160px;
+  display:block;
+  background:transparent;
 }
 .topbar-greeting{
   font-size:12px;
@@ -626,7 +630,7 @@ input,select{font-family:inherit}
 <!-- =================== APP =================== -->
 <div id="app">
   <header class="topbar">
-    <div class="topbar-logo">Mahj Mahj</div>
+    <div class="topbar-logo"><img src="logo.png" alt="Mahj Mahj"></div>
     <div class="topbar-greeting" id="greeting"></div>
   </header>
 
@@ -785,6 +789,31 @@ input,select{font-family:inherit}
   var eventsLoaded = false;
   var newsLoaded   = false;
 
+  // ---------- Upcoming-events filter ----------
+  // Client-side date filter so past events never render, regardless of API behavior.
+  // Unparseable dates default to showing — better to leak a weird one than hide a legit upcoming event.
+  function isEventUpcoming(ev){
+    if (!ev) return false;
+    var raw = ev.date || ev.start_date || ev.starts_at || ev.event_date || '';
+    raw = String(raw).trim();
+    if (!raw) return true;
+    var today = new Date();
+    today.setHours(0,0,0,0);
+    var iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso){
+      var d = new Date(parseInt(iso[1],10), parseInt(iso[2],10)-1, parseInt(iso[3],10));
+      return d.getTime() >= today.getTime();
+    }
+    var parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) return true;
+    parsed.setHours(0,0,0,0);
+    return parsed.getTime() >= today.getTime();
+  }
+  function filterUpcoming(events){
+    if (!Array.isArray(events)) return [];
+    return events.filter(isEventUpcoming);
+  }
+
   // ---------- Profile ----------
   function getProfile(){
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -927,6 +956,7 @@ input,select{font-family:inherit}
     fetch(url).then(function(r){ return r.json(); }).then(function(data){
       var events = data.events || data || [];
       if (!Array.isArray(events)) events = [];
+      events = filterUpcoming(events);
       cachedEvents = events;
       eventsLoaded = true;
       renderEvents(events);
@@ -1198,6 +1228,7 @@ input,select{font-family:inherit}
     fetch(url).then(function(r){ return r.json(); }).then(function(data){
       var events = data.events || data || [];
       if (!Array.isArray(events)) events = [];
+      events = filterUpcoming(events);
       cachedEvents = events;
       eventsLoaded = true;
       updateHomeEventsCard(events);
