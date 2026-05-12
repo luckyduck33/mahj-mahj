@@ -1,0 +1,6 @@
+{
+  "name": "@mahjmahj/scoring",
+  "private": true,
+  "type": "module",
+  "description": "MAHJ MAHJ scoring engine — local ESM modules. No build, no deps. Tests via node --test."
+}
