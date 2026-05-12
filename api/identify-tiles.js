@@ -55,6 +55,12 @@ Every tile is a 2-character string. The first character is the kind, the second 
 - Dots / Pin / 筒: \`1p\`, \`2p\`, \`3p\`, \`4p\`, \`5p\`, \`6p\`, \`7p\`, \`8p\`, \`9p\`
   Visual: round colored circles. Count the circles to determine the value.
 
+  **Tile-set artistic variance — read carefully:** Different tile sets render the dot tiles with very different aesthetics. Some show literal small circles in a clear grid. Others use stylized designs where each "dot" is a decorated flower-petal, ring, or compound shape with internal detail. When the design is stylized:
+    - Count the **distinct outer dot/petal groups**, not the internal sub-elements within each group. A tile with 4 large red 4-petaled flower-like shapes is \`4p\`, not \`9p\`, \`16p\`, or flowers.
+    - The classic giveaway for value: \`1p\` is one large central element; \`4p\` arranges 4 elements in a square (2×2); \`9p\` arranges 9 elements in a 3×3 grid; \`5p\` has 4 corners + center.
+    - **Flowers (fE/fS/fW/fN) never appear three-times-identical in a hand.** If you see three identical tiles with flower-like designs, they are a pong of a numbered dot tile (typically \`4p\`), not flowers.
+    - When three tiles in a row look identical, they form a **pong** (three of one value), not three different values.
+
 ## Winds
 
 - \`wE\` — East / 東 — typically green character on white tile
@@ -90,7 +96,14 @@ The standard winning hand shape varies by style:
 A "set" can be:
 
 - **Pong**: three identical tiles. Example: \`5m,5m,5m\`.
-- **Chow**: three tiles in sequence, same suit. Example: \`3p,4p,5p\`. Honors (winds, dragons) cannot form chows. (Note: American mahjong typically doesn't use chows.)
+- **Chow**: three tiles in **sequence**, same suit. Example: \`3p,4p,5p\`. Honors (winds, dragons) cannot form chows. (Note: American mahjong typically doesn't use chows.)
+
+  **HARD STRUCTURAL RULE — never violate:** A chow's three tile values MUST be three consecutive integers in the same suit. \`3p,4p,5p\` is a chow. \`3p,8p,9p\` is **NOT a chow** under any rule variant — never label such a group as a chow.
+
+  If you see three tiles in a numbered suit that aren't sequential, the correct interpretation is almost always one of:
+    (a) They're a **pong** — three identical tiles — and you misread two of the values. Reread the values carefully and emit a pong of the most likely single value.
+    (b) They're parts of separate sets the player hasn't separated visually. Emit them as ungrouped \`tiles[]\` entries and leave \`sets\` empty for that region.
+  Never invent a chow to make the groupings "fit". An invalid chow causes the downstream engine to hard-fail at parse time.
 - **Kong**: four identical tiles. Example: \`wE,wE,wE,wE\`. Can include jokers in American (substituting for matching tiles).
 - **Quint** (American only): five identical tiles, usually 3 matching + 2 jokers.
 - **Pair**: two identical tiles. Example: \`7s,7s\`. Jokers cannot appear in pairs.
