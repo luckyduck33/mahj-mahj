@@ -1,0 +1,12 @@
+{
+  "name": "mahj-mahj-app",
+  "private": true,
+  "type": "module",
+  "description": "MAHJ MAHJ app.mahjmahj.co — static HTML + Vercel serverless functions. No build step. package.json exists only to declare the @anthropic-ai/sdk dependency for api/*.js.",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0"
+  }
+}

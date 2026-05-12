@@ -306,38 +306,148 @@
   color:var(--coral-dark, #A84424);
 }
 
-/* ── V2 placeholder ────────────────────────────────────────────── */
-.sm-v2{
-  margin:24px 20px 0;
-  padding:18px 18px;
-  background:linear-gradient(135deg,rgba(45,74,62,.06),rgba(200,90,58,.04));
-  border:1px solid rgba(74,62,52,.08);
-  border-radius:14px;
+/* ── Photo-Assisted Scoring (V2) ─────────────────────────────────── */
+.sm-photo-banner{
+  padding:14px 20px 4px;
 }
-.sm-v2-badge{
-  display:inline-block;
+.sm-photo-cta{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 16px;
+  background:linear-gradient(135deg,rgba(45,74,62,.92),rgba(45,74,62,.78));
+  color:#FFFFFF;
+  border:0;
+  border-radius:14px;
+  text-align:left;
+  box-shadow:0 4px 14px rgba(45,74,62,.18);
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .15s;
+}
+.sm-photo-cta:active{transform:scale(.985); box-shadow:0 2px 6px rgba(45,74,62,.18)}
+.sm-photo-icon{
+  flex:0 0 auto;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:rgba(255,255,255,.14);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#FFFFFF;
+}
+.sm-photo-text{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.sm-photo-eyebrow{
   font-size:10px;
   font-weight:700;
-  letter-spacing:.14em;
-  color:var(--coral);
-  background:rgba(200,90,58,.1);
-  padding:4px 8px;
-  border-radius:99px;
+  letter-spacing:.18em;
   text-transform:uppercase;
-  margin-bottom:10px;
+  color:var(--coral);
 }
-.sm-v2-title{
+.sm-photo-title{
   font-family:var(--h-font);
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:-.005em;
+  color:#FFFFFF;
+}
+.sm-photo-sub{
+  font-size:12px;
+  font-weight:400;
+  color:rgba(255,255,255,.78);
+}
+.sm-photo-arrow{
+  flex:0 0 auto;
   font-size:18px;
+  color:rgba(255,255,255,.68);
+  padding-right:2px;
+}
+
+/* Notes surfaced by the model after identification */
+.sm-photo-notes{
+  margin:8px 20px 0;
+  padding:10px 14px;
+  background:rgba(200,90,58,.08);
+  border:1px solid rgba(200,90,58,.18);
+  border-radius:10px;
+  font-size:12.5px;
+  line-height:1.5;
+  color:var(--ink);
+}
+.sm-photo-notes strong{
+  color:var(--coral);
+  letter-spacing:.04em;
+  font-weight:700;
+}
+
+/* Low-confidence tile highlighting */
+.sm-tile.is-low-conf{
+  border-color:var(--coral);
+  border-width:2px;
+  box-shadow:0 0 0 2px rgba(200,90,58,.18);
+  position:relative;
+}
+.sm-tile.is-low-conf::after{
+  content:"?";
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:var(--coral);
+  color:#FFFFFF;
+  font-size:10px;
+  font-weight:800;
+  line-height:14px;
+  text-align:center;
+}
+
+/* Busy overlay while the API call is in flight */
+.sm-photo-busy{
+  position:fixed;
+  inset:0;
+  background:rgba(20,20,18,.55);
+  z-index:400;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  animation:smFadeIn .2s ease-out;
+}
+.sm-photo-busy-card{
+  background:var(--cream);
+  border-radius:18px;
+  padding:32px 36px;
+  text-align:center;
+  max-width:80%;
+  box-shadow:0 12px 40px rgba(20,20,18,.4);
+}
+.sm-photo-spinner{
+  width:42px;
+  height:42px;
+  border:3px solid rgba(200,90,58,.18);
+  border-top-color:var(--coral);
+  border-radius:50%;
+  margin:0 auto 16px;
+  animation:smSpin .9s linear infinite;
+}
+@keyframes smSpin{to{transform:rotate(360deg)}}
+.sm-photo-busy-title{
+  font-family:var(--h-font);
+  font-size:16px;
   font-weight:700;
   color:var(--green);
-  margin:0 0 6px;
+  margin-bottom:4px;
 }
-.sm-v2-text{
-  font-size:13px;
-  line-height:1.55;
-  color:var(--ink);
-  margin:0;
+.sm-photo-busy-sub{
+  font-size:12px;
+  color:var(--ink-light);
 }
 
 /* ── Picker modal ──────────────────────────────────────────────── */

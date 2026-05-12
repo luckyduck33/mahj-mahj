@@ -9,6 +9,7 @@
 import { score } from '../lib/scoring/hong-kong/calculator.js';
 import { explain } from '../lib/scoring/hong-kong/explain.js';
 import { drawScorecard } from './scorecard.js';
+import { capturePhoto, identifyTiles, buildStatePatch } from './photo.js';
 
 // ─── Tile constants ────────────────────────────────────────────────────────
 
@@ -72,6 +73,10 @@ function freshState() {
     pickerOpen: false,
     result: null,
     error: null,
+    // V2 — Photo-Assisted Scoring
+    photoBusy: false,
+    photoNotes: '',
+    lowConfidenceTiles: new Set(),
   };
 }
 
@@ -97,6 +102,10 @@ function render() {
         <p class="view-sub">Hong Kong Mahjong faan calculator — build your winning hand below.</p>
       </header>
 
+      ${renderPhotoBanner()}
+
+      ${state.photoNotes ? `<div class="sm-photo-notes"><strong>From the photo:</strong> ${escapeHtml(state.photoNotes)}</div>` : ''}
+
       <div class="sm-section">
         <div class="sm-label">Hand structure</div>
         <div class="sm-segmented" id="sm-kind">
@@ -115,12 +124,11 @@ function render() {
       ${renderActionRow()}
 
       ${state.error ? `<div class="sm-error">${escapeHtml(state.error)}</div>` : ''}
-
-      ${renderV2Placeholder()}
     </div>
 
     ${state.pickerOpen ? renderPicker() : ''}
     ${state.result ? renderResults() : ''}
+    ${state.photoBusy ? renderPhotoBusy() : ''}
   `;
 
   wireEvents();
@@ -170,7 +178,7 @@ function renderSetSlot(s, idx) {
         </div>
       ` : `
         <button class="sm-slot-tiles" data-slot-idx="${idx}" data-open-picker="set" type="button">
-          ${renderSlotTiles(s)}
+          ${renderSlotTiles(s, `set:${idx}`)}
         </button>
         <div class="sm-slot-foot">
           ${exposedToggle}
@@ -194,7 +202,7 @@ function renderPairSlot(p) {
         <span class="sm-slot-type">Pair</span>
       </div>
       <button class="sm-slot-tiles" data-open-picker="pair" type="button">
-        ${renderSlotTiles(p)}
+        ${renderSlotTiles(p, 'pair')}
       </button>
       ${filled || partial ? `
         <div class="sm-slot-foot">
@@ -205,14 +213,16 @@ function renderPairSlot(p) {
   `;
 }
 
-function renderSlotTiles(s) {
+function renderSlotTiles(s, keyPrefix = '') {
   if (!s.type) return `<span class="sm-slot-empty">Tap to choose tiles</span>`;
   const size = SET_TYPE_SIZE[s.type];
   const slots = [];
   for (let i = 0; i < size; i++) {
     const t = s.tiles[i];
+    const lowConf = keyPrefix && state.lowConfidenceTiles?.has(`${keyPrefix}:${i}`);
+    const cls = lowConf ? 'sm-tile is-small is-low-conf' : 'sm-tile is-small';
     slots.push(t
-      ? `<span class="sm-tile is-small">${tileGlyph(t)}</span>`
+      ? `<span class="${cls}">${tileGlyph(t)}</span>`
       : `<span class="sm-tile is-small is-empty"></span>`);
   }
   return slots.join('');
@@ -227,7 +237,11 @@ function renderSpecialBuilder() {
       <button class="sm-special-pile" data-open-picker="special" type="button">
         ${have === 0
           ? '<span class="sm-slot-empty">Tap to pick all 14 tiles</span>'
-          : state.specialTiles.map(t => `<span class="sm-tile is-small">${tileGlyph(t)}</span>`).join('')
+          : state.specialTiles.map((t, i) => {
+              const lowConf = state.lowConfidenceTiles?.has(`special:${i}`);
+              const cls = lowConf ? 'sm-tile is-small is-low-conf' : 'sm-tile is-small';
+              return `<span class="${cls}">${tileGlyph(t)}</span>`;
+            }).join('')
         }
       </button>
       <p class="sm-hint" style="margin-top:8px;">
@@ -301,15 +315,35 @@ function renderActionRow() {
   `;
 }
 
-function renderV2Placeholder() {
+function renderPhotoBanner() {
   return `
-    <div class="sm-section sm-v2">
-      <div class="sm-v2-badge">Coming soon</div>
-      <h3 class="sm-v2-title">Photo-Assisted Scoring</h3>
-      <p class="sm-v2-text">
-        Snap a photo of your winning hand and we'll identify the tiles, ask a couple of clarifying
-        questions, and score it for you. Same engine, less tapping.
-      </p>
+    <div class="sm-section sm-photo-banner">
+      <button class="sm-photo-cta" data-action="photo-capture" type="button">
+        <span class="sm-photo-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h3l2-2h8l2 2h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </span>
+        <span class="sm-photo-text">
+          <span class="sm-photo-eyebrow">New</span>
+          <span class="sm-photo-title">Use a photo of your hand</span>
+          <span class="sm-photo-sub">We'll identify the tiles for you — review before scoring.</span>
+        </span>
+        <span class="sm-photo-arrow" aria-hidden="true">→</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderPhotoBusy() {
+  return `
+    <div class="sm-photo-busy" role="dialog" aria-live="polite">
+      <div class="sm-photo-busy-card">
+        <div class="sm-photo-spinner"></div>
+        <div class="sm-photo-busy-title">Identifying tiles…</div>
+        <div class="sm-photo-busy-sub">This usually takes 5–15 seconds.</div>
+      </div>
     </div>
   `;
 }
@@ -571,9 +605,12 @@ function handleAction(action, idx) {
   switch (action) {
     case 'clear-slot':
       state.sets[idx] = { type: null, tiles: [], exposed: false };
+      // Drop any low-confidence markers belonging to this slot.
+      state.lowConfidenceTiles = filterOutPrefix(state.lowConfidenceTiles, `set:${idx}:`);
       break;
     case 'clear-pair':
       state.pair = { type: 'pair', tiles: [], exposed: false };
+      state.lowConfidenceTiles = filterOutPrefix(state.lowConfidenceTiles, 'pair:');
       break;
     case 'reset-all':
       state = freshState();
@@ -584,8 +621,51 @@ function handleAction(action, idx) {
     case 'share-card':
       shareScorecard();
       return;
+    case 'photo-capture':
+      runPhotoCapture();
+      return;
+    case 'photo-clear-notes':
+      state.photoNotes = '';
+      break;
   }
   render();
+}
+
+function filterOutPrefix(set, prefix) {
+  const out = new Set();
+  for (const k of set) if (!k.startsWith(prefix)) out.add(k);
+  return out;
+}
+
+async function runPhotoCapture() {
+  state.error = null;
+  const file = await capturePhoto();
+  if (!file) return; // User cancelled
+
+  state.photoBusy = true;
+  render();
+
+  try {
+    const result = await identifyTiles(file);
+    const patch = buildStatePatch(result);
+    // Apply the patch — overwrite construction state, keep win context + flowers
+    // (unless the photo found flowers, in which case use those).
+    state.handKind = patch.handKind;
+    state.sets = patch.sets;
+    state.pair = patch.pair;
+    state.specialTiles = patch.specialTiles;
+    if (patch.flowers && patch.flowers.length > 0) {
+      state.flowers = patch.flowers;
+    }
+    state.lowConfidenceTiles = patch.lowConfidenceTiles;
+    state.photoNotes = patch.notes;
+    state.error = null;
+  } catch (err) {
+    state.error = err && err.message ? err.message : 'Something went wrong identifying the photo.';
+  } finally {
+    state.photoBusy = false;
+    render();
+  }
 }
 
 function closeResults() {

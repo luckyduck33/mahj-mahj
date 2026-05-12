@@ -1,0 +1,399 @@
+// MAHJ MAHJ — Photo-Assisted Scoring V2
+//
+// Vercel serverless function. Accepts a base64-encoded JPEG/PNG of a Hong Kong
+// Mahjong winning hand, returns a structured JSON list of identified tiles
+// (plus best-guess set groupings + per-tile confidence) that the client can
+// drop into the existing manual-builder state object in lib/scoring/.
+//
+// The scoring engine in lib/scoring/hong-kong/ is unchanged. Only the vision
+// layer is new.
+//
+// POST /api/identify-tiles
+//   body: { image: "<base64 jpeg/png>", media_type?: "image/jpeg"|"image/png" }
+//   200:  { tiles: [...], sets: [...], pair_index: number, hand_kind, notes }
+//   400:  { error: "...short reason..." }
+//   503:  { error: "...upstream...", request_id?: "..." }
+//
+// Environment:
+//   ANTHROPIC_API_KEY — required, set in Vercel project settings.
+//
+// The system prompt is built once at module load and cached on the Anthropic
+// side via prompt caching (5-min ephemeral). First call writes; subsequent
+// calls within 5 minutes read at ~10% the input cost.
+
+import Anthropic from "@anthropic-ai/sdk";
+
+// ─── Config ────────────────────────────────────────────────────────────────
+
+const MODEL = "claude-sonnet-4-6";
+const MAX_TOKENS = 2048;          // Bounded JSON; rarely exceeds 800 tokens
+const MAX_IMAGE_BYTES = 4_000_000; // 4MB, well below Vercel's 4.5MB body cap
+
+// Allowed media types from the client side.
+const ALLOWED_MEDIA = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+// ─── System prompt (cacheable) ─────────────────────────────────────────────
+//
+// IMPORTANT: this string is treated as a stable cache prefix. Do NOT
+// interpolate timestamps, request IDs, or any per-request value into it.
+// Anthropic caches by exact byte match — a single varying byte invalidates.
+
+const SYSTEM_PROMPT = `You identify tiles in photographs of Hong Kong Mahjong winning hands and return structured JSON for a downstream scoring engine.
+
+# Tile string format
+
+Every tile is a 2-character string. The first character is the kind, the second is the value.
+
+## Numbered suits (1–9 in each)
+
+- Characters / Man / 萬: \`1m\`, \`2m\`, \`3m\`, \`4m\`, \`5m\`, \`6m\`, \`7m\`, \`8m\`, \`9m\`
+  Visual: red Chinese character on top, black Chinese numeral 萬 on bottom.
+
+- Bamboo / Sou / 索: \`1s\`, \`2s\`, \`3s\`, \`4s\`, \`5s\`, \`6s\`, \`7s\`, \`8s\`, \`9s\`
+  Visual: green bamboo sticks arranged in patterns. \`1s\` is special — typically a bird (sparrow), not a bamboo stick.
+
+- Dots / Pin / 筒: \`1p\`, \`2p\`, \`3p\`, \`4p\`, \`5p\`, \`6p\`, \`7p\`, \`8p\`, \`9p\`
+  Visual: round colored circles. Count the circles to determine the value.
+
+## Winds
+
+- \`wE\` — East / 東 — typically green character on white tile
+- \`wS\` — South / 南 — typically green character
+- \`wW\` — West / 西 — typically green character
+- \`wN\` — North / 北 — typically green character
+
+## Dragons
+
+- \`dR\` — Red Dragon / 中 — bold red character
+- \`dG\` — Green Dragon / 發 — green character (means "prosper")
+- \`dW\` — White Dragon / 白 — blank tile, or a tile with just a border/box. No central character.
+
+## Bonus tiles (flowers and seasons)
+
+These don't go in sets — they sit aside.
+
+- Flowers: \`fE\` (Plum), \`fS\` (Orchid), \`fW\` (Chrysanthemum), \`fN\` (Bamboo plant). Usually numbered 1–4 in the corner.
+- Seasons: \`zE\` (Spring), \`zS\` (Summer), \`zW\` (Autumn), \`zN\` (Winter). Usually numbered 1–4 in the corner.
+
+# Set vocabulary
+
+A Hong Kong winning hand has 4 sets + 1 pair = 14 tiles (16 if there's a kong).
+
+- **Pong**: three identical tiles. Example: \`5m,5m,5m\`.
+- **Chow**: three tiles in sequence, same suit. Example: \`3p,4p,5p\`. Honors (winds, dragons) cannot form chows.
+- **Kong**: four identical tiles. Example: \`wE,wE,wE,wE\`.
+- **Pair**: two identical tiles. Example: \`7s,7s\`.
+
+Special hand structures the engine also recognizes:
+
+- **Seven Pairs**: 7 distinct pairs (14 tiles, no triplets).
+- **Thirteen Orphans**: 1m, 9m, 1p, 9p, 1s, 9s, wE, wS, wW, wN, dR, dG, dW + one of those repeated.
+
+# Visual grouping cues
+
+Players typically lay tiles out left-to-right with clear gaps between sets. Use spacing as the primary grouping hint:
+
+- Tiles touching with no gap → likely one set.
+- Larger gap → set boundary.
+- A pair is usually placed slightly apart or at one end.
+- Exposed sets (called from another player) are often laid down separately from concealed sets. If you can't tell, default \`exposed\` to \`false\`.
+- The "winning tile" (the tile that completed the hand) might be set apart. You don't need to identify it — the user will provide that context.
+
+# Output schema
+
+Return exactly this JSON structure. No extra fields. No prose outside JSON.
+
+\`\`\`
+{
+  "error": null | "not_a_hand" | "blurry" | "incomplete_hand",
+  "hand_kind": "standard" | "sevenPairs" | "thirteenOrphans",
+  "tiles": [
+    { "tile": "<2-char tile string>", "confidence": <0.0–1.0> },
+    ...
+  ],
+  "sets": [
+    {
+      "type": "pong" | "chow" | "kong" | "pair",
+      "tile_indices": [<int>, ...],
+      "exposed": <boolean>
+    },
+    ...
+  ],
+  "pair_index": <int>,
+  "flowers": [<tile-string>, ...],
+  "notes": "<free-form short string>"
+}
+\`\`\`
+
+Field semantics:
+
+- \`error\`: \`null\` if the photo is a valid mahjong hand. Set to \`"not_a_hand"\` if the photo isn't of mahjong tiles. \`"blurry"\` if you can't read any tiles confidently. \`"incomplete_hand"\` if fewer than 13 tiles are visible. When \`error\` is non-null, the rest of the fields can be sparse but must still be valid JSON.
+- \`hand_kind\`: \`"standard"\` for the common 4-sets-plus-pair shape. Use \`"sevenPairs"\` or \`"thirteenOrphans"\` only if you're confident those are the structures.
+- \`tiles\`: every non-bonus tile you see, in left-to-right reading order. Confidence 0.0–1.0 reflects how sure you are of that specific tile's identity. Be honest — low confidence is more useful to the user than a wrong-but-confident guess. Aim for 14–18 entries for standard hands (14 baseline + 1 per kong).
+- \`sets\`: your best guess at grouping. \`tile_indices\` are positions into the \`tiles\` array (0-based). If you can't guess groupings, return an empty \`sets\` array — the user will group manually.
+- \`pair_index\`: which entry in \`sets\` is the pair, or \`-1\` if you didn't identify one.
+- \`flowers\`: bonus tiles (flowers / seasons) set aside from the main hand. Format is the same 2-char tile string. Empty array if none.
+- \`notes\`: ≤200 chars. Use this for the user — what you're confident about, what's ambiguous, what you'd recommend reviewing. Do not echo the tile list.
+
+# Calibration
+
+- Confident reading of an unobstructed tile: 0.9–1.0
+- Partially occluded but recognizable: 0.6–0.8
+- Heavily occluded, glare, motion blur, unusual angle: 0.3–0.5
+- Educated guess from shape/color only: <0.3 (and consider marking the whole photo blurry)
+
+# Important constraints
+
+- Use ONLY the 2-character tile strings listed above. Do not invent variants like \`"1man"\` or \`"east"\` or \`"red_dragon"\`.
+- The tile string is case-sensitive. \`wE\` not \`WE\`, \`dR\` not \`Dr\`.
+- Return valid JSON. No trailing commas. No comments. No code fences inside the JSON value.
+- Don't include the winning-context fields (seat wind, self-drawn, etc.) — the user provides those manually.
+- Don't speculate about scoring. That's the engine's job.
+
+# Example
+
+If the photo shows: 1m-1m-1m, 4p-5p-6p, 7s-8s-9s, dR-dR-dR, wE-wE (a winning hand), with the dragons exposed (called from another player), respond with:
+
+\`\`\`
+{
+  "error": null,
+  "hand_kind": "standard",
+  "tiles": [
+    {"tile":"1m","confidence":0.97},{"tile":"1m","confidence":0.97},{"tile":"1m","confidence":0.95},
+    {"tile":"4p","confidence":0.96},{"tile":"5p","confidence":0.96},{"tile":"6p","confidence":0.96},
+    {"tile":"7s","confidence":0.94},{"tile":"8s","confidence":0.94},{"tile":"9s","confidence":0.95},
+    {"tile":"dR","confidence":0.99},{"tile":"dR","confidence":0.99},{"tile":"dR","confidence":0.99},
+    {"tile":"wE","confidence":0.97},{"tile":"wE","confidence":0.97}
+  ],
+  "sets": [
+    {"type":"pong","tile_indices":[0,1,2],"exposed":false},
+    {"type":"chow","tile_indices":[3,4,5],"exposed":false},
+    {"type":"chow","tile_indices":[6,7,8],"exposed":false},
+    {"type":"pong","tile_indices":[9,10,11],"exposed":true},
+    {"type":"pair","tile_indices":[12,13],"exposed":false}
+  ],
+  "pair_index": 4,
+  "flowers": [],
+  "notes": "Dragon pong appears slightly separated from the others — flagged as exposed; user should confirm."
+}
+\`\`\`
+`;
+
+// ─── Output schema for structured outputs ──────────────────────────────────
+
+const OUTPUT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["error", "hand_kind", "tiles", "sets", "pair_index", "flowers", "notes"],
+  properties: {
+    error: {
+      anyOf: [
+        { type: "null" },
+        { type: "string", enum: ["not_a_hand", "blurry", "incomplete_hand"] },
+      ],
+    },
+    hand_kind: { type: "string", enum: ["standard", "sevenPairs", "thirteenOrphans"] },
+    tiles: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["tile", "confidence"],
+        properties: {
+          tile: { type: "string" },
+          confidence: { type: "number" },
+        },
+      },
+    },
+    sets: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["type", "tile_indices", "exposed"],
+        properties: {
+          type: { type: "string", enum: ["pong", "chow", "kong", "pair"] },
+          tile_indices: { type: "array", items: { type: "integer" } },
+          exposed: { type: "boolean" },
+        },
+      },
+    },
+    pair_index: { type: "integer" },
+    flowers: { type: "array", items: { type: "string" } },
+    notes: { type: "string" },
+  },
+};
+
+// ─── Client singleton ──────────────────────────────────────────────────────
+
+let _client = null;
+function getClient() {
+  if (_client) return _client;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY env var is not set");
+  }
+  _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _client;
+}
+
+// ─── CORS helpers ──────────────────────────────────────────────────────────
+//
+// The Capacitor iOS shell loads the page from a non-https origin
+// (capacitor://localhost or similar). Allow any origin since the request is
+// authenticated by the server-side ANTHROPIC_API_KEY anyway, not by origin.
+
+function applyCors(res, origin) {
+  res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  res.setHeader("Vary", "Origin");
+}
+
+// ─── Handler ───────────────────────────────────────────────────────────────
+
+export default async function handler(req, res) {
+  const origin = req.headers.origin;
+  applyCors(res, origin);
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  let body;
+  try {
+    body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+  } catch {
+    res.status(400).json({ error: "Invalid JSON body" });
+    return;
+  }
+
+  const { image, media_type } = body;
+
+  if (typeof image !== "string" || image.length === 0) {
+    res.status(400).json({ error: "Missing required field: image (base64 string)" });
+    return;
+  }
+  // Strip data URL prefix if present.
+  const cleanedImage = image.replace(/^data:image\/(?:jpeg|jpg|png|webp);base64,/, "");
+
+  // Estimate raw byte size — base64 expands input by 4/3.
+  const estimatedBytes = (cleanedImage.length * 3) / 4;
+  if (estimatedBytes > MAX_IMAGE_BYTES) {
+    res.status(400).json({
+      error: `Image too large (~${Math.round(estimatedBytes / 1024)}KB > ${MAX_IMAGE_BYTES / 1024}KB). Resize on the client before uploading.`,
+    });
+    return;
+  }
+
+  const resolvedMedia = ALLOWED_MEDIA.has(media_type) ? media_type : "image/jpeg";
+
+  let client;
+  try {
+    client = getClient();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+    return;
+  }
+
+  try {
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
+      system: [
+        {
+          type: "text",
+          text: SYSTEM_PROMPT,
+          // Cache the system prompt for 5 minutes. Stable byte-for-byte across
+          // requests, so subsequent calls within the window pay ~10% read cost.
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      output_config: {
+        format: { type: "json_schema", schema: OUTPUT_SCHEMA },
+      },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: resolvedMedia, data: cleanedImage },
+            },
+            {
+              type: "text",
+              text: "Identify the tiles in this Hong Kong Mahjong hand and return the JSON described in your instructions.",
+            },
+          ],
+        },
+      ],
+    });
+
+    if (response.stop_reason === "refusal") {
+      res.status(422).json({
+        error: "Model refused to process this image",
+        category: response.stop_details?.category || null,
+      });
+      return;
+    }
+
+    // Find the JSON text block. With output_config.format the first text block
+    // is guaranteed to be valid JSON matching the schema.
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock) {
+      res.status(502).json({ error: "Model returned no text content" });
+      return;
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(textBlock.text);
+    } catch (err) {
+      res.status(502).json({ error: "Model output failed to parse as JSON", raw: textBlock.text });
+      return;
+    }
+
+    // Surface usage so the client can show cache hit/miss for debugging.
+    res.status(200).json({
+      ...parsed,
+      _usage: {
+        input_tokens: response.usage?.input_tokens,
+        output_tokens: response.usage?.output_tokens,
+        cache_read_input_tokens: response.usage?.cache_read_input_tokens,
+        cache_creation_input_tokens: response.usage?.cache_creation_input_tokens,
+      },
+    });
+  } catch (err) {
+    // Anthropic SDK typed errors expose .status and .message.
+    if (err instanceof Anthropic.RateLimitError) {
+      res.status(429).json({ error: "Rate limited. Try again in a few seconds." });
+      return;
+    }
+    if (err instanceof Anthropic.AuthenticationError) {
+      res.status(500).json({ error: "Server misconfigured: invalid Anthropic API key." });
+      return;
+    }
+    if (err instanceof Anthropic.APIError) {
+      res.status(503).json({
+        error: "Upstream Anthropic API error",
+        message: err.message,
+        request_id: err.request_id,
+      });
+      return;
+    }
+    res.status(500).json({ error: err?.message || "Internal error" });
+  }
+}
+
+// Vercel: increase body size limit for image uploads.
+export const config = {
+  api: {
+    bodyParser: { sizeLimit: "5mb" },
+  },
+};
