@@ -38,7 +38,7 @@ const ALLOWED_MEDIA = new Set(["image/jpeg", "image/png", "image/webp"]);
 // interpolate timestamps, request IDs, or any per-request value into it.
 // Anthropic caches by exact byte match — a single varying byte invalidates.
 
-const SYSTEM_PROMPT = `You identify tiles in photographs of Hong Kong Mahjong winning hands and return structured JSON for a downstream scoring engine.
+const SYSTEM_PROMPT = `You identify tiles in photographs of mahjong winning hands and return structured JSON for a downstream scoring engine. The app supports three styles of play: Hong Kong, Taiwanese, and American. You don't need to know which style — just identify every tile you see, in reading order, with your best-guess set grouping. The client will route the result to the right engine.
 
 # Tile string format
 
@@ -70,24 +70,35 @@ Every tile is a 2-character string. The first character is the kind, the second 
 
 ## Bonus tiles (flowers and seasons)
 
-These don't go in sets — they sit aside.
+In Hong Kong + Taiwanese, these don't go in sets — they sit aside. In American mahjong, flowers may be required inside the hand on certain card patterns; treat them as ordinary tiles for identification.
 
 - Flowers: \`fE\` (Plum), \`fS\` (Orchid), \`fW\` (Chrysanthemum), \`fN\` (Bamboo plant). Usually numbered 1–4 in the corner.
 - Seasons: \`zE\` (Spring), \`zS\` (Summer), \`zW\` (Autumn), \`zN\` (Winter). Usually numbered 1–4 in the corner.
 
+## Joker (American mahjong only)
+
+- \`jk\` — Joker. Visual: a tile with a distinctive "JOKER" label or a colorful design (often a flower or face). Used as a wildcard in American mahjong only; never appears in HK or Taiwanese sets.
+
 # Set vocabulary
 
-A Hong Kong winning hand has 4 sets + 1 pair = 14 tiles (16 if there's a kong).
+The standard winning hand shape varies by style:
+
+- Hong Kong: 4 sets + 1 pair = 14 tiles (16 if any sets are kongs)
+- Taiwanese: 5 sets + 1 pair = 17 tiles (more with kongs)
+- American: 14 tiles in user-specified groups; structure depends on NMJL card pattern
+
+A "set" can be:
 
 - **Pong**: three identical tiles. Example: \`5m,5m,5m\`.
-- **Chow**: three tiles in sequence, same suit. Example: \`3p,4p,5p\`. Honors (winds, dragons) cannot form chows.
-- **Kong**: four identical tiles. Example: \`wE,wE,wE,wE\`.
-- **Pair**: two identical tiles. Example: \`7s,7s\`.
+- **Chow**: three tiles in sequence, same suit. Example: \`3p,4p,5p\`. Honors (winds, dragons) cannot form chows. (Note: American mahjong typically doesn't use chows.)
+- **Kong**: four identical tiles. Example: \`wE,wE,wE,wE\`. Can include jokers in American (substituting for matching tiles).
+- **Quint** (American only): five identical tiles, usually 3 matching + 2 jokers.
+- **Pair**: two identical tiles. Example: \`7s,7s\`. Jokers cannot appear in pairs.
 
-Special hand structures the engine also recognizes:
+Special hand structures the engines also recognize:
 
-- **Seven Pairs**: 7 distinct pairs (14 tiles, no triplets).
-- **Thirteen Orphans**: 1m, 9m, 1p, 9p, 1s, 9s, wE, wS, wW, wN, dR, dG, dW + one of those repeated.
+- **Seven Pairs**: 7 distinct pairs (14 tiles, no triplets). Taiwanese also accepts 8 pairs (16 tiles).
+- **Thirteen Orphans** (Hong Kong only): 1m, 9m, 1p, 9p, 1s, 9s, wE, wS, wW, wN, dR, dG, dW + one of those repeated.
 
 # Visual grouping cues
 
@@ -98,6 +109,7 @@ Players typically lay tiles out left-to-right with clear gaps between sets. Use 
 - A pair is usually placed slightly apart or at one end.
 - Exposed sets (called from another player) are often laid down separately from concealed sets. If you can't tell, default \`exposed\` to \`false\`.
 - The "winning tile" (the tile that completed the hand) might be set apart. You don't need to identify it — the user will provide that context.
+- American hands often have larger group counts (4 or 5 tiles per group, sometimes with jokers); HK/Taiwanese have 3 or 4. Let the photo's actual spacing drive your grouping — don't force a count.
 
 # Output schema
 
@@ -144,11 +156,12 @@ Field semantics:
 
 # Important constraints
 
-- Use ONLY the 2-character tile strings listed above. Do not invent variants like \`"1man"\` or \`"east"\` or \`"red_dragon"\`.
+- Use ONLY the 2-character tile strings listed above (including \`jk\` for jokers). Do not invent variants like \`"1man"\` or \`"east"\` or \`"red_dragon"\`.
 - The tile string is case-sensitive. \`wE\` not \`WE\`, \`dR\` not \`Dr\`.
 - Return valid JSON. No trailing commas. No comments. No code fences inside the JSON value.
 - Don't include the winning-context fields (seat wind, self-drawn, etc.) — the user provides those manually.
 - Don't speculate about scoring. That's the engine's job.
+- If you see a joker (\`jk\`), the hand is American — set \`hand_kind\` to \`"standard"\` and emit \`set\` groupings if the spacing suggests them; otherwise leave \`sets\` empty and just emit the flat \`tiles\` list.
 
 # Example
 

@@ -6,8 +6,7 @@
  * scoring engine in lib/scoring/.
  */
 
-import { score } from '../lib/scoring/hong-kong/calculator.js';
-import { explain } from '../lib/scoring/hong-kong/explain.js';
+import { score, explain, STYLES, STYLE_META } from '../lib/scoring/index.js';
 import { drawScorecard } from './scorecard.js';
 import { capturePhoto, identifyTiles, buildStatePatch } from './photo.js';
 
@@ -33,6 +32,7 @@ const TILE_GLYPH = {
   'dR': '🀄', 'dG': '🀅', 'dW': '🀆',
   'fE': '🀢', 'fS': '🀣', 'fW': '🀤', 'fN': '🀥',
   'zE': '🀦', 'zS': '🀧', 'zW': '🀨', 'zN': '🀩',
+  'jk': '🀪',
 };
 
 const TILE_NAMES = {
@@ -47,17 +47,26 @@ const TILE_NAMES = {
 
 const SET_TYPE_SIZE = { pong: 3, chow: 3, kong: 4, pair: 2 };
 
+/**
+ * How many sets a "standard" hand requires for each style.
+ *   hong-kong: 4 sets + pair = 14 tiles
+ *   taiwanese: 5 sets + pair = 17 tiles
+ *   american:  flat-list builder (no set count)
+ */
+const SETS_PER_STYLE = { 'hong-kong': 4, 'taiwanese': 5 };
+
 // ─── State ─────────────────────────────────────────────────────────────────
 
-function freshState() {
+function emptySets(n) {
+  return Array.from({ length: n }, () => ({ type: null, tiles: [], exposed: false }));
+}
+
+function freshState(style = 'hong-kong') {
+  const setCount = SETS_PER_STYLE[style] || 4;
   return {
+    style,
     handKind: 'standard',
-    sets: [
-      { type: null, tiles: [], exposed: false },
-      { type: null, tiles: [], exposed: false },
-      { type: null, tiles: [], exposed: false },
-      { type: null, tiles: [], exposed: false },
-    ],
+    sets: emptySets(setCount),
     pair: { type: 'pair', tiles: [], exposed: false },
     flowers: [],
     win: {
@@ -67,8 +76,15 @@ function freshState() {
       robbingKong: false,
       lastTile: false,
       winOnKongDraw: false,
+      // Taiwanese-only context
+      isDealer: false,
+      consecutiveDealerWins: 0,
     },
     specialTiles: [],
+    // American-only state — flat tile list + user-entered card metadata
+    americanTiles: [],
+    americanPoints: '',     // string from the input; parsed at score time
+    americanPattern: '',    // optional name from the NMJL card
     activeSlot: null,
     pickerOpen: false,
     result: null,
@@ -99,23 +115,16 @@ function render() {
     <div class="sm-root">
       <header class="sm-head">
         <h1 class="view-h" style="padding:22px 20px 4px;">Score My Hand</h1>
-        <p class="view-sub">Hong Kong Mahjong faan calculator — build your winning hand below.</p>
+        <p class="view-sub">${escapeHtml(STYLE_META[state.style].description)}</p>
       </header>
 
-      ${renderPhotoBanner()}
+      ${renderStylePicker()}
+
+      ${state.style !== 'american' ? renderPhotoBanner() : ''}
 
       ${state.photoNotes ? `<div class="sm-photo-notes"><strong>From the photo:</strong> ${escapeHtml(state.photoNotes)}</div>` : ''}
 
-      <div class="sm-section">
-        <div class="sm-label">Hand structure</div>
-        <div class="sm-segmented" id="sm-kind">
-          ${segOption('standard', 'Standard', state.handKind)}
-          ${segOption('sevenPairs', 'Seven Pairs', state.handKind)}
-          ${segOption('thirteenOrphans', 'Thirteen Orphans', state.handKind)}
-        </div>
-      </div>
-
-      ${state.handKind === 'standard' ? renderStandardBuilder() : renderSpecialBuilder()}
+      ${renderBuilderForStyle()}
 
       ${renderFlowersSection()}
 
@@ -137,6 +146,79 @@ function render() {
 function segOption(value, label, current) {
   const active = current === value ? ' is-active' : '';
   return `<button class="sm-seg${active}" data-kind="${value}" type="button">${label}</button>`;
+}
+
+function renderStylePicker() {
+  return `
+    <div class="sm-section sm-style-picker">
+      <div class="sm-label">Style of play</div>
+      <div class="sm-segmented">
+        ${STYLES.map(s => {
+          const active = state.style === s ? ' is-active' : '';
+          return `<button class="sm-seg${active}" data-style="${s}" type="button">${STYLE_META[s].label}</button>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderBuilderForStyle() {
+  if (state.style === 'american') return renderAmericanBuilder();
+  // hong-kong + taiwanese share the structural builder shape; set count differs.
+  return `
+    <div class="sm-section">
+      <div class="sm-label">Hand structure</div>
+      <div class="sm-segmented" id="sm-kind">
+        ${segOption('standard', 'Standard', state.handKind)}
+        ${segOption('sevenPairs', 'Seven Pairs', state.handKind)}
+        ${state.style === 'hong-kong' ? segOption('thirteenOrphans', 'Thirteen Orphans', state.handKind) : ''}
+      </div>
+    </div>
+    ${state.handKind === 'standard' ? renderStandardBuilder() : renderSpecialBuilder()}
+  `;
+}
+
+function renderAmericanBuilder() {
+  const need = 14;
+  const have = state.americanTiles.length;
+  return `
+    <div class="sm-section">
+      <div class="sm-label">Your 14 tiles <span class="sm-hint">(${have}/${need})</span></div>
+      <button class="sm-special-pile" data-open-picker="american" type="button">
+        ${have === 0
+          ? '<span class="sm-slot-empty">Tap to pick your tiles (jokers allowed)</span>'
+          : state.americanTiles.map((t, i) => {
+              const lowConf = state.lowConfidenceTiles?.has(`american:${i}`);
+              const cls = lowConf ? 'sm-tile is-small is-low-conf' : 'sm-tile is-small';
+              return `<span class="${cls}">${tileGlyph(t)}</span>`;
+            }).join('')
+        }
+      </button>
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label">Pattern from your NMJL card <span class="sm-hint">— optional</span></div>
+      <input type="text"
+             class="sm-text-input"
+             placeholder="e.g. LIKE NUMBERS #3"
+             value="${escapeHtml(state.americanPattern)}"
+             data-american-field="pattern"
+             maxlength="60" />
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label">Point value from your NMJL card</div>
+      <input type="number"
+             class="sm-text-input"
+             placeholder="e.g. 25"
+             value="${escapeHtml(state.americanPoints)}"
+             data-american-field="points"
+             min="10" max="999" />
+      <p class="sm-hint" style="margin-top:8px; display:block;">
+        Self-drawn doubles the score. Jokerless doubles the score. Both stack to 4×.
+      </p>
+    </div>
+  `;
 }
 
 function renderStandardBuilder() {
@@ -273,26 +355,41 @@ function renderWinContext() {
   return `
     <div class="sm-section">
       <div class="sm-label">Win context</div>
-      <div class="sm-context-grid">
-        <div class="sm-context-cell">
-          <span class="sm-context-label">Seat wind</span>
-          <select data-win="seatWind">
-            ${winds.map(w => `<option value="${w}" ${state.win.seatWind === w ? 'selected' : ''}>${windName(w)}</option>`).join('')}
-          </select>
+      ${state.style === 'american' ? `
+        <div class="sm-context-flags">
+          ${flagToggle('selfDrawn', 'Self-drawn (mahjong off the wall)')}
         </div>
-        <div class="sm-context-cell">
-          <span class="sm-context-label">Prevailing wind</span>
-          <select data-win="prevailingWind">
-            ${winds.map(w => `<option value="${w}" ${state.win.prevailingWind === w ? 'selected' : ''}>${windName(w)}</option>`).join('')}
-          </select>
+      ` : `
+        <div class="sm-context-grid">
+          <div class="sm-context-cell">
+            <span class="sm-context-label">Seat wind</span>
+            <select data-win="seatWind">
+              ${winds.map(w => `<option value="${w}" ${state.win.seatWind === w ? 'selected' : ''}>${windName(w)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="sm-context-cell">
+            <span class="sm-context-label">Prevailing wind</span>
+            <select data-win="prevailingWind">
+              ${winds.map(w => `<option value="${w}" ${state.win.prevailingWind === w ? 'selected' : ''}>${windName(w)}</option>`).join('')}
+            </select>
+          </div>
         </div>
-      </div>
-      <div class="sm-context-flags">
-        ${flagToggle('selfDrawn', 'Self-drawn (tsumo)')}
-        ${flagToggle('robbingKong', 'Robbing the kong')}
-        ${flagToggle('lastTile', 'Won on last tile')}
-        ${flagToggle('winOnKongDraw', 'Won on kong replacement')}
-      </div>
+        <div class="sm-context-flags">
+          ${flagToggle('selfDrawn', state.style === 'taiwanese' ? 'Self-drawn (自摸)' : 'Self-drawn (tsumo)')}
+          ${flagToggle('robbingKong', 'Robbing the kong')}
+          ${flagToggle('lastTile', 'Won on last tile')}
+          ${flagToggle('winOnKongDraw', 'Won on kong replacement')}
+          ${state.style === 'taiwanese' ? flagToggle('isDealer', 'I was the dealer (莊家)') : ''}
+        </div>
+        ${state.style === 'taiwanese' && state.win.isDealer ? `
+          <div class="sm-context-cell" style="margin-top:10px;">
+            <span class="sm-context-label">Consecutive dealer wins (連N莊)</span>
+            <input type="number" data-win="consecutiveDealerWins" min="0" max="20"
+                   value="${state.win.consecutiveDealerWins || 0}"
+                   class="sm-text-input" />
+          </div>
+        ` : ''}
+      `}
     </div>
   `;
 }
@@ -351,8 +448,22 @@ function renderPhotoBusy() {
 function renderPicker() {
   const ctx = state.activeSlot;
   const target = pickerTargetDescription(ctx);
-  // For standard set/pair, only show core tiles. For flowers/special, include bonuses.
-  const groups = (ctx?.kind === 'flowers') ? BONUS_TILES : SUITS_GROUPED;
+  // Group selection by picker context:
+  //   flowers / bonus picker → only flowers + seasons
+  //   american flat picker → all tiles including joker
+  //   everything else → standard suit tiles only
+  let groups;
+  if (ctx?.kind === 'flowers') {
+    groups = BONUS_TILES;
+  } else if (ctx?.kind === 'american') {
+    groups = [
+      ...SUITS_GROUPED,
+      ...BONUS_TILES,
+      { label: 'Joker', tiles: ['jk'] },
+    ];
+  } else {
+    groups = SUITS_GROUPED;
+  }
   return `
     <div class="sm-picker-backdrop" data-close-picker="true">
       <div class="sm-picker" data-stop-propagation="true">
@@ -406,10 +517,21 @@ function pickerTargetDescription(ctx) {
     return { title: 'Add flowers & seasons', sub: 'Tap each bonus tile you held.' };
   }
   if (ctx.kind === 'special') {
-    const remaining = 14 - state.specialTiles.length;
+    const need = state.style === 'taiwanese' ? (state.specialTiles.length >= 14 ? 16 : 14) : 14;
+    const remaining = need - state.specialTiles.length;
+    const label = state.handKind === 'sevenPairs'
+      ? `Pick all ${need} tiles (Seven Pairs)`
+      : 'Pick all 14 tiles (Thirteen Orphans)';
     return {
-      title: state.handKind === 'sevenPairs' ? 'Pick all 14 tiles (Seven Pairs)' : 'Pick all 14 tiles (Thirteen Orphans)',
-      sub: remaining > 0 ? `${remaining} more to choose` : '14 tiles chosen — tap Done',
+      title: label,
+      sub: remaining > 0 ? `${remaining} more to choose` : 'Tiles chosen — tap Done',
+    };
+  }
+  if (ctx.kind === 'american') {
+    const remaining = 14 - state.americanTiles.length;
+    return {
+      title: 'Pick your 14 tiles',
+      sub: remaining > 0 ? `${remaining} more to choose (jokers welcome)` : '14 tiles chosen — tap Done',
     };
   }
   return { title: '', sub: '' };
@@ -443,7 +565,7 @@ function renderResults() {
         <div class="sm-results-head">
           <div class="sm-results-eyebrow">${escapeHtml(r.summary || 'Chicken Hand')}</div>
           <h2 class="sm-results-title">
-            ${r.faan} <span class="sm-results-unit">faan</span>
+            ${r.faan} <span class="sm-results-unit">${STYLE_META[r.style || state.style]?.unit || 'faan'}</span>
             ${limitTag}
           </h2>
           <p class="sm-results-headline">${escapeHtml(r.handTitle)}</p>
@@ -480,6 +602,18 @@ function renderResults() {
 // ─── Events ────────────────────────────────────────────────────────────────
 
 function wireEvents() {
+  host.querySelectorAll('[data-style]').forEach(el => {
+    el.addEventListener('click', () => setStyle(el.getAttribute('data-style')));
+  });
+
+  host.querySelectorAll('[data-american-field]').forEach(el => {
+    const field = el.getAttribute('data-american-field');
+    el.addEventListener('input', () => {
+      if (field === 'pattern') state.americanPattern = el.value;
+      else if (field === 'points') state.americanPoints = el.value;
+    });
+  });
+
   host.querySelectorAll('[data-kind]').forEach(el => {
     el.addEventListener('click', () => setHandKind(el.getAttribute('data-kind')));
   });
@@ -542,12 +676,28 @@ function wireEvents() {
   });
 }
 
+function setStyle(style) {
+  if (state.style === style) return;
+  // Carry forward only win context + flowers; everything else resets.
+  const winContext = { ...state.win };
+  const flowers = [...state.flowers];
+  state = freshState(style);
+  state.win = winContext;
+  state.flowers = flowers;
+  // American has no concept of "hand kind" — force standard.
+  if (style === 'american') state.handKind = 'standard';
+  render();
+}
+
 function setHandKind(kind) {
   state.handKind = kind;
   // Reset construction state but keep win context & flowers.
-  state.sets = freshState().sets;
-  state.pair = freshState().pair;
+  const fresh = freshState(state.style);
+  state.sets = fresh.sets;
+  state.pair = fresh.pair;
   state.specialTiles = [];
+  state.americanTiles = [];
+  state.lowConfidenceTiles = new Set();
   state.error = null;
   render();
 }
@@ -592,8 +742,17 @@ function pickTile(tile) {
   } else if (ctx.kind === 'flowers') {
     state.flowers.push(tile);
   } else if (ctx.kind === 'special') {
-    if (state.specialTiles.length < 14) state.specialTiles.push(tile);
-    if (state.specialTiles.length >= 14) {
+    // Taiwanese seven pairs may take 14 OR 16 tiles. We auto-close at 14
+    // but let the user add 15-16 manually before tapping Done.
+    state.specialTiles.push(tile);
+    const target = state.style === 'taiwanese' && state.handKind === 'sevenPairs' ? 16 : 14;
+    if (state.specialTiles.length >= target) {
+      state.pickerOpen = false;
+      state.activeSlot = null;
+    }
+  } else if (ctx.kind === 'american') {
+    if (state.americanTiles.length < 14) state.americanTiles.push(tile);
+    if (state.americanTiles.length >= 14) {
       state.pickerOpen = false;
       state.activeSlot = null;
     }
@@ -613,7 +772,7 @@ function handleAction(action, idx) {
       state.lowConfidenceTiles = filterOutPrefix(state.lowConfidenceTiles, 'pair:');
       break;
     case 'reset-all':
-      state = freshState();
+      state = freshState(state.style);
       break;
     case 'score':
       runScore();
@@ -646,14 +805,16 @@ async function runPhotoCapture() {
   render();
 
   try {
-    const result = await identifyTiles(file);
-    const patch = buildStatePatch(result);
-    // Apply the patch — overwrite construction state, keep win context + flowers
-    // (unless the photo found flowers, in which case use those).
-    state.handKind = patch.handKind;
-    state.sets = patch.sets;
-    state.pair = patch.pair;
-    state.specialTiles = patch.specialTiles;
+    const result = await identifyTiles(file, { style: state.style });
+    const patch = buildStatePatch(result, { style: state.style });
+    state.handKind = patch.handKind || state.handKind;
+    if (state.style === 'american') {
+      state.americanTiles = patch.americanTiles || [];
+    } else {
+      state.sets = patch.sets;
+      state.pair = patch.pair;
+      state.specialTiles = patch.specialTiles;
+    }
     if (patch.flowers && patch.flowers.length > 0) {
       state.flowers = patch.flowers;
     }
@@ -675,11 +836,36 @@ function closeResults() {
 
 function runScore() {
   let input;
-  if (state.handKind === 'standard') {
-    // Need 4 fully-filled sets + pair
+
+  if (state.style === 'american') {
+    if (state.americanTiles.length !== 14) {
+      state.error = `American hands need 14 tiles (you have ${state.americanTiles.length}).`;
+      render();
+      return;
+    }
+    const pts = Number(state.americanPoints);
+    if (!Number.isFinite(pts) || pts <= 0) {
+      state.error = 'Enter the point value from your NMJL card.';
+      render();
+      return;
+    }
+    input = {
+      style: 'american',
+      tiles: [...state.americanTiles],
+      userPoints: pts,
+      patternName: state.americanPattern || '',
+      win: { selfDrawn: !!state.win.selfDrawn },
+    };
+  } else if (state.handKind === 'standard') {
+    const expectedSetCount = SETS_PER_STYLE[state.style];
     const incomplete = state.sets.findIndex(s => !s.type || s.tiles.length !== SET_TYPE_SIZE[s.type]);
     if (incomplete >= 0) {
       state.error = `Set ${incomplete + 1} isn't complete yet.`;
+      render();
+      return;
+    }
+    if (state.sets.length !== expectedSetCount) {
+      state.error = `${STYLE_META[state.style].label} hands need ${expectedSetCount} sets.`;
       render();
       return;
     }
@@ -689,18 +875,26 @@ function runScore() {
       return;
     }
     input = {
+      style: state.style,
       sets: state.sets.map(s => ({ type: s.type, tiles: s.tiles, exposed: s.exposed })),
       pair: { type: 'pair', tiles: state.pair.tiles },
       flowers: [...state.flowers],
       win: { ...state.win },
     };
   } else {
-    if (state.specialTiles.length !== 14) {
-      state.error = `Need 14 tiles for ${state.handKind === 'sevenPairs' ? 'Seven Pairs' : 'Thirteen Orphans'}.`;
+    // sevenPairs (HK + TW) or thirteenOrphans (HK only)
+    const minTiles = state.handKind === 'thirteenOrphans' ? 14 : 14;
+    const accept16 = state.style === 'taiwanese' && state.handKind === 'sevenPairs';
+    const hasEnough = state.specialTiles.length === 14 || (accept16 && state.specialTiles.length === 16);
+    if (!hasEnough) {
+      const label = state.handKind === 'sevenPairs' ? 'Seven Pairs' : 'Thirteen Orphans';
+      const range = accept16 ? '14 or 16' : '14';
+      state.error = `${label} needs ${range} tiles (you have ${state.specialTiles.length}).`;
       render();
       return;
     }
     input = {
+      style: state.style,
       special: { kind: state.handKind, tiles: state.specialTiles },
       flowers: [...state.flowers],
       win: { ...state.win },
@@ -744,6 +938,7 @@ function tileGlyph(t) {
 }
 
 function tileShortLabel(t) {
+  if (t === 'jk') return 'J';
   if (/^[1-9][mps]$/.test(t)) return t[0];
   if (t[0] === 'w') return t[1];
   if (t[0] === 'd') return ({ R: '中', G: '發', W: '白' })[t[1]] || t[1];

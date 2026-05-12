@@ -22,6 +22,44 @@
   margin-left:6px;
 }
 
+/* ── Style picker (HK / Taiwanese / American) ───────────────────── */
+.sm-style-picker{
+  padding-top:14px;
+  padding-bottom:8px;
+}
+.sm-style-picker .sm-segmented{
+  background:rgba(45,74,62,.08);
+}
+.sm-style-picker .sm-seg.is-active{
+  background:var(--green);
+  color:#FFFFFF;
+}
+
+/* ── Free-form text/number inputs (American builder, dealer count) ─ */
+.sm-text-input{
+  width:100%;
+  background:#FFFFFF;
+  border:1px solid rgba(74,62,52,.16);
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:15px;
+  font-weight:500;
+  color:var(--ink);
+  font-family:inherit;
+  -webkit-appearance:none;
+  appearance:none;
+  outline:none;
+  transition:border-color .15s;
+}
+.sm-text-input:focus{
+  border-color:var(--coral);
+}
+.sm-text-input::-webkit-outer-spin-button,
+.sm-text-input::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+
 /* ── Segmented control ──────────────────────────────────────────── */
 .sm-segmented{
   display:flex;

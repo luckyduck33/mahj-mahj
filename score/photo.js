@@ -120,7 +120,7 @@ async function loadBitmap(file) {
  * POSTs the compressed image to the identify-tiles endpoint and returns the
  * parsed JSON. Throws on network / API errors with a user-friendly message.
  */
-export async function identifyTiles(file) {
+export async function identifyTiles(file, { style = 'hong-kong' } = {}) {
   const blob = await compressImage(file);
   const dataUrl = await blobToDataUrl(blob);
   const base64 = dataUrl.replace(/^data:image\/[^;]+;base64,/, '');
@@ -133,7 +133,7 @@ export async function identifyTiles(file) {
     response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64, media_type: 'image/jpeg' }),
+      body: JSON.stringify({ image: base64, media_type: 'image/jpeg', style }),
       signal: controller.signal,
     });
   } catch (err) {
@@ -196,36 +196,55 @@ function blobToDataUrl(blob) {
  * lowConfidenceTiles contains keys of the form "set:<setIdx>:<tileIdx>" or
  * "pair:<tileIdx>" or "special:<tileIdx>" — match the rendering loop.
  */
-export function buildStatePatch(identifyResult, { lowConfidenceThreshold = 0.7 } = {}) {
+const SETS_PER_STYLE = { 'hong-kong': 4, 'taiwanese': 5 };
+
+export function buildStatePatch(identifyResult, { lowConfidenceThreshold = 0.7, style = 'hong-kong' } = {}) {
   const lowConf = new Set();
   const tiles = identifyResult.tiles || [];
   const sets = identifyResult.sets || [];
   const pairIdx = typeof identifyResult.pair_index === 'number' ? identifyResult.pair_index : -1;
   const handKind = identifyResult.hand_kind || 'standard';
 
+  // American: flat tile list (includes jokers if model identified any).
+  if (style === 'american') {
+    const americanTiles = tiles.map((t, i) => {
+      if ((t.confidence ?? 1) < lowConfidenceThreshold) lowConf.add(`american:${i}`);
+      return t.tile;
+    });
+    return {
+      handKind: 'standard',
+      sets: emptySets(0),
+      pair: { type: 'pair', tiles: [], exposed: false },
+      specialTiles: [],
+      americanTiles,
+      flowers: [],  // bonuses are part of the hand in American, not set aside
+      lowConfidenceTiles: lowConf,
+      notes: identifyResult.notes || '',
+    };
+  }
+
+  const expectedSetCount = SETS_PER_STYLE[style] || 4;
+
   if (handKind !== 'standard') {
-    // Seven Pairs / Thirteen Orphans — flat tile list.
     const specialTiles = tiles.map((t, i) => {
       if ((t.confidence ?? 1) < lowConfidenceThreshold) lowConf.add(`special:${i}`);
       return t.tile;
     });
     return {
       handKind,
-      sets: emptyStandardSets(),
+      sets: emptySets(expectedSetCount),
       pair: { type: 'pair', tiles: [], exposed: false },
       specialTiles,
+      americanTiles: [],
       flowers: identifyResult.flowers || [],
       lowConfidenceTiles: lowConf,
       notes: identifyResult.notes || '',
     };
   }
 
-  // Standard hand — fill 4 sets + pair from the grouping hints.
-  const builderSets = emptyStandardSets();
+  const builderSets = emptySets(expectedSetCount);
   let pair = { type: 'pair', tiles: [], exposed: false };
 
-  // Walk sets[] in source order. If pair_index matches, route to pair;
-  // otherwise route to the next empty slot in builderSets.
   let nextSlot = 0;
   sets.forEach((s, sIdx) => {
     const groupTiles = (s.tile_indices || []).map((i) => tiles[i]).filter(Boolean);
@@ -242,7 +261,7 @@ export function buildStatePatch(identifyResult, { lowConfidenceThreshold = 0.7 }
       groupTileStrings.slice(0, 2).forEach((_, i) => markLow(i, `pair:${i}`));
       return;
     }
-    if (nextSlot >= 4) return; // overflow — drop extra sets, surface in notes
+    if (nextSlot >= expectedSetCount) return;
     if (!['pong', 'chow', 'kong'].includes(s.type)) return;
     builderSets[nextSlot] = {
       type: s.type,
@@ -258,17 +277,13 @@ export function buildStatePatch(identifyResult, { lowConfidenceThreshold = 0.7 }
     sets: builderSets,
     pair,
     specialTiles: [],
+    americanTiles: [],
     flowers: identifyResult.flowers || [],
     lowConfidenceTiles: lowConf,
     notes: identifyResult.notes || '',
   };
 }
 
-function emptyStandardSets() {
-  return [
-    { type: null, tiles: [], exposed: false },
-    { type: null, tiles: [], exposed: false },
-    { type: null, tiles: [], exposed: false },
-    { type: null, tiles: [], exposed: false },
-  ];
+function emptySets(n) {
+  return Array.from({ length: n }, () => ({ type: null, tiles: [], exposed: false }));
 }
