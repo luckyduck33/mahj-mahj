@@ -276,6 +276,136 @@ function applyCors(res, origin) {
   res.setHeader("Vary", "Origin");
 }
 
+// ─── Server-side set repair ────────────────────────────────────────────────
+//
+// Defense in depth: the prompt tells the model never to emit an invalid chow,
+// but vision models don't reliably honor structural rules under uncertainty.
+// We catch and repair invalid sets *server-side* before sending to the client,
+// so an invalid model output never causes a parse failure downstream.
+//
+// Repair strategy for an invalid chow:
+//   1. If 3/3 tile strings match → it's already a pong; just retype it.
+//   2. If 2/3 match → the model likely misread one tile; retype as pong and
+//      rewrite the odd tile to match (with low confidence so the user sees a
+//      coral ring on it for review).
+//   3. If 0/3 match but tiles are same suit + numbered → almost always three
+//      identical tiles the model misread as three different values. Pick the
+//      highest-confidence tile value, retype as pong, rewrite all three tiles
+//      to that value (with low confidence on all three).
+//   4. Otherwise → drop the set entirely; tiles[] remains, user groups manually.
+//
+// All repairs append a short note to the response so the user sees what
+// happened ("Set with tiles [3p,8p,9p] reinterpreted as pong of 3p — review
+// before scoring").
+
+function isNumberedSuit(t) {
+  return typeof t === "string" && /^[1-9][mps]$/.test(t);
+}
+
+function isValidChow(tileStrings) {
+  if (tileStrings.length !== 3) return false;
+  if (!tileStrings.every(isNumberedSuit)) return false;
+  const suit = tileStrings[0][1];
+  if (!tileStrings.every(t => t[1] === suit)) return false;
+  const values = tileStrings.map(t => Number(t[0])).sort((a, b) => a - b);
+  // No duplicates allowed in a chow.
+  if (values[0] === values[1] || values[1] === values[2]) return false;
+  return values[0] + 1 === values[1] && values[1] + 1 === values[2];
+}
+
+function isValidPong(tileStrings) {
+  if (tileStrings.length !== 3) return false;
+  return tileStrings[0] === tileStrings[1] && tileStrings[1] === tileStrings[2];
+}
+
+function isValidKong(tileStrings) {
+  if (tileStrings.length !== 4) return false;
+  return tileStrings.every(t => t === tileStrings[0]);
+}
+
+function repairSets(parsed) {
+  if (!parsed || !Array.isArray(parsed.sets)) return parsed;
+  const tiles = Array.isArray(parsed.tiles) ? parsed.tiles : [];
+  const repairNotes = [];
+  const repairedSets = [];
+
+  for (const s of parsed.sets) {
+    const indices = Array.isArray(s.tile_indices) ? s.tile_indices : [];
+    const tileObjs = indices.map(i => tiles[i]).filter(Boolean);
+    const tileStrings = tileObjs.map(t => t.tile);
+
+    // Pass-through for valid sets.
+    if (s.type === "chow" && isValidChow(tileStrings)) { repairedSets.push(s); continue; }
+    if (s.type === "pong" && isValidPong(tileStrings)) { repairedSets.push(s); continue; }
+    if (s.type === "kong" && isValidKong(tileStrings)) { repairedSets.push(s); continue; }
+    if (s.type === "pair" && tileStrings.length === 2 && tileStrings[0] === tileStrings[1]) {
+      repairedSets.push(s); continue;
+    }
+
+    // Repair attempt for malformed sets.
+    if ((s.type === "chow" || s.type === "pong") && tileStrings.length === 3) {
+      // Count occurrences to find a consensus value
+      const counts = Object.create(null);
+      for (const t of tileStrings) counts[t] = (counts[t] || 0) + 1;
+      const sortedByCount = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const [topTile, topCount] = sortedByCount[0];
+      const before = `[${tileStrings.join(",")}]`;
+
+      if (topCount === 3) {
+        // Already a pong; model just labeled it wrong.
+        repairedSets.push({ ...s, type: "pong" });
+        repairNotes.push(`Set ${before}: was '${s.type}', recognized as pong.`);
+        continue;
+      }
+
+      if (topCount === 2) {
+        // Rewrite the odd tile to the consensus value with low confidence.
+        const oddTile = tileStrings.find(t => t !== topTile);
+        const oddIdx = indices[tileStrings.indexOf(oddTile)];
+        if (oddIdx != null && tiles[oddIdx]) {
+          const origConf = tiles[oddIdx].confidence ?? 0.5;
+          tiles[oddIdx] = { tile: topTile, confidence: Math.min(0.4, origConf) };
+        }
+        repairedSets.push({ ...s, type: "pong" });
+        repairNotes.push(`Set ${before}: model misread one tile; reinterpreted as pong of ${topTile} (please review).`);
+        continue;
+      }
+
+      // 3 different values — almost always 3 identical tiles misread.
+      // Pick the highest-confidence value; rewrite all three with low confidence.
+      const sortedByConf = [...tileObjs].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0));
+      const bestTile = sortedByConf[0]?.tile;
+      if (bestTile && isNumberedSuit(bestTile)) {
+        for (const i of indices) {
+          if (tiles[i]) tiles[i] = { tile: bestTile, confidence: 0.35 };
+        }
+        repairedSets.push({ ...s, type: "pong" });
+        repairNotes.push(`Set ${before}: model produced an invalid ${s.type}; best guess is pong of ${bestTile} (low confidence — please verify).`);
+        continue;
+      }
+
+      // Couldn't make sense of it. Drop the set; tiles remain in tiles[].
+      repairNotes.push(`Set ${before}: couldn't reinterpret; tiles left ungrouped for manual pickup.`);
+      continue;
+    }
+
+    // Any other malformed set: pass through unchanged.
+    repairedSets.push(s);
+  }
+
+  if (repairNotes.length === 0) {
+    return parsed;
+  }
+
+  return {
+    ...parsed,
+    tiles,
+    sets: repairedSets,
+    notes: [parsed.notes, ...repairNotes].filter(Boolean).join(" · "),
+    _repaired: true,
+  };
+}
+
 // ─── Handler ───────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -385,9 +515,14 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Server-side defense in depth: rewrite invalid sets (e.g. non-sequential
+    // "chows") to valid pongs based on consensus tile values, surface what
+    // was repaired in the `notes` field.
+    const repaired = repairSets(parsed);
+
     // Surface usage so the client can show cache hit/miss for debugging.
     res.status(200).json({
-      ...parsed,
+      ...repaired,
       _usage: {
         input_tokens: response.usage?.input_tokens,
         output_tokens: response.usage?.output_tokens,
