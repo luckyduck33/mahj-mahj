@@ -1,0 +1,19 @@
+{
+  "name": "mahj-mahj-app",
+  "private": true,
+  "type": "module",
+  "description": "MAHJ MAHJ app.mahjmahj.co — static HTML + Vercel serverless functions. No build step. The @capacitor/* deps drive the iOS native wrapper (Xcode project loads this dir as the web bundle); they don't need to install at deploy time, only when running `npx cap sync ios` locally before an Xcode archive.",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/push-notifications": "^7.0.0"
+  }
+}
