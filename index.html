@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="hero.jpg">
+<link rel="stylesheet" href="score/view.css?v=3">
 <style>
 :root{
   --coral:#C85A3A;
@@ -686,6 +687,15 @@ input,select{font-family:inherit}
             </div>
             <div class="card-meta" id="home-saved-meta">Events you've hearted</div>
           </button>
+
+          <button class="card card-primary" data-go="score" style="background:linear-gradient(135deg,var(--coral) 0%,#A84424 100%);">
+            <svg class="card-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="11" rx="1.5"/><rect x="13" y="4" width="7" height="11" rx="1.5"/><path d="M7 7.5v4M16.5 7.5v4M9 18l3 3 3-3"/></svg>
+            <div>
+              <div class="card-label">New</div>
+              <div class="card-title">Score My Hand</div>
+            </div>
+            <div class="card-meta">Hong Kong faan calculator — works at the table</div>
+          </button>
         </div>
 
         <div id="home-news" style="margin-top:16px;"></div>
@@ -749,6 +759,13 @@ input,select{font-family:inherit}
         <div id="saved-list"></div>
       </div>
     </section>
+
+    <!-- SCORE MY HAND (Hong Kong Mahjong faan calculator) -->
+    <section class="view" id="view-score">
+      <div id="score-host">
+        <div style="padding:60px 20px;text-align:center;color:var(--ink-light);font-size:13px;">Loading scorer&hellip;</div>
+      </div>
+    </section>
   </main>
 
   <nav class="tabbar" role="tablist">
@@ -767,6 +784,10 @@ input,select{font-family:inherit}
     <button data-tab="drills" aria-label="Drills">
       <svg class="icn" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
       <span class="tab-label">Drills</span>
+    </button>
+    <button data-tab="score" aria-label="Score">
+      <svg class="icn" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="11" rx="1.5"/><rect x="13" y="4" width="7" height="11" rx="1.5"/><path d="M7 7.5v4M16.5 7.5v4M9 18l3 3 3-3"/></svg>
+      <span class="tab-label">Score</span>
     </button>
     <button data-tab="saved" aria-label="Saved">
       <svg class="icn" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -1245,9 +1266,25 @@ input,select{font-family:inherit}
     drills: document.getElementById('view-drills'),
     tiles:  document.getElementById('view-tiles'),
     news:   document.getElementById('view-news'),
-    saved:  document.getElementById('view-saved')
+    saved:  document.getElementById('view-saved'),
+    score:  document.getElementById('view-score')
   };
   var tabBtns = document.querySelectorAll('.tabbar button');
+
+  // Lazy-load the Score My Hand module the first time the tab is opened.
+  var scoreLoaded = false;
+  function ensureScoreLoaded(){
+    if (scoreLoaded) return;
+    scoreLoaded = true;
+    import('./score/view.js').then(function(mod){
+      mod.init(document.getElementById('score-host'));
+    }).catch(function(err){
+      var host = document.getElementById('score-host');
+      if (host) host.innerHTML = '<div style="padding:60px 20px;text-align:center;color:var(--ink);font-size:13px;">'
+        + 'Couldn’t load the scorer.<br><small>' + (err && err.message || err) + '</small></div>';
+      scoreLoaded = false;
+    });
+  }
 
   function setTab(name){
     Object.keys(views).forEach(function(k){ views[k].classList.toggle('active', k === name); });
@@ -1263,6 +1300,8 @@ input,select{font-family:inherit}
       loadNews();
     } else if (name === 'saved'){
       loadSaved();
+    } else if (name === 'score'){
+      ensureScoreLoaded();
     } else {
       // Legacy injection for Learn, Drills, Tiles views
       var inject = views[name] && views[name].querySelector('.inject.loading');
