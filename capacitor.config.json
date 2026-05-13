@@ -1,0 +1,22 @@
+{
+  "appId": "co.mahjmahj.app",
+  "appName": "Mahj Mahj",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "hostname": "app.mahjmahj.co",
+    "url": "https://app.mahjmahj.co"
+  },
+  "ios": {
+    "scheme": "Mahj Mahj",
+    "contentInset": "always",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

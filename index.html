@@ -1464,5 +1464,35 @@ input,select{font-family:inherit}
   if (initialHash && views[initialHash]) setTab(initialHash);
 })();
 </script>
+
+<!--
+  Push notification pre-permission modal — Capacitor iOS only.
+  This block is purely additive: it sits hidden at the end of <body>,
+  outside the existing layout flow, and is only made visible by the
+  push-notifications.js module when running inside the native wrapper.
+  The web (mobile Safari, desktop) never sees it. Styling is inline so
+  it can't interact with the existing CSS cascade.
+-->
+<div id="mm-push-primer" hidden role="dialog" aria-modal="true" aria-labelledby="mm-push-primer-title" style="position:fixed;inset:0;z-index:9999;background:rgba(42,32,26,0.62);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Poppins,system-ui,-apple-system,sans-serif;">
+  <div style="background:#F0EADF;border-radius:18px;max-width:380px;width:100%;padding:28px 24px 22px;box-shadow:0 24px 60px rgba(42,32,26,0.35);text-align:center;">
+    <div aria-hidden="true" style="font-size:42px;line-height:1;margin-bottom:14px;">🀄</div>
+    <h2 id="mm-push-primer-title" style="font-family:Unbounded,system-ui,sans-serif;font-weight:700;font-size:22px;color:#2A201A;margin:0 0 10px;line-height:1.18;letter-spacing:-0.01em;">
+      Never miss a table near you.
+    </h2>
+    <p style="font-size:14.5px;line-height:1.55;color:#4A3E34;margin:0 0 22px;">
+      We'll send a heads-up when new mahjong events drop in your city, when a table you saved is starting soon, or when Mahj Mahj launches somewhere new.
+    </p>
+    <button data-action="accept" type="button" style="display:block;width:100%;background:#5B7A5D;color:#F0EADF;border:none;border-radius:12px;padding:14px 18px;font-family:Unbounded,system-ui,sans-serif;font-weight:600;font-size:15px;letter-spacing:0.02em;cursor:pointer;margin-bottom:10px;">
+      Yes, keep me in the loop
+    </button>
+    <button data-action="dismiss" type="button" style="display:block;width:100%;background:transparent;color:#4A3E34;border:none;padding:10px 12px;font-family:Poppins,system-ui,sans-serif;font-weight:500;font-size:13px;cursor:pointer;">
+      Not right now
+    </button>
+    <p style="font-size:11.5px;color:rgba(74,62,52,0.65);margin:16px 0 0;line-height:1.45;">
+      You can change this any time in iOS Settings → Notifications → Mahj Mahj.
+    </p>
+  </div>
+</div>
+<script type="module" src="lib/push-notifications.js?v=1"></script>
 </body>
 </html>
