@@ -5,9 +5,7 @@
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
-    "iosScheme": "https",
-    "hostname": "app.mahjmahj.co",
-    "url": "https://app.mahjmahj.co"
+    "iosScheme": "https"
   },
   "ios": {
     "scheme": "Mahj Mahj",
