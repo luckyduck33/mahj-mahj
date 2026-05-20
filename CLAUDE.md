@@ -32,5 +32,8 @@ Format: `{Assignee} — {Verb} {Object} ({Context})`
 - Cross-agent workflow: ~/Desktop/CLAUDE/Operations/lucky-shared-protocol.md
 - This repo's behavior: this CLAUDE.md
 
+## Source-of-Truth Gate
+See **Source-of-Truth Gate** in `~/Desktop/CLAUDE/Operations/lucky-shared-protocol.md`. All factual claims (numbers, prices, calculations, scores, dates, medical claims, business listings) require stated sources. Invented or estimated data presented as fact is a P0 bug regardless of feature priority.
+
 ## Timestamps
 All outputs: YYYY-MM-DD HH:MM PT (Pacific Time)
