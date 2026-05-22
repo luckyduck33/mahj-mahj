@@ -801,7 +801,9 @@ input,select{font-family:inherit}
   var STORAGE_KEY = 'mahj_user_profile';
   var ONBOARD_KEY = 'mahj_onboarded';
   var FAVS_KEY    = 'mahj_saved_v1';
-  var LEGACY_URL  = 'https://app.mahjmahj.co/legacy.html';
+  // Bundled locally (was https://app.mahjmahj.co/legacy.html — now 404). Learn/Drills/Tiles
+  // load from the offline bundle so the tabs are never empty on a fresh install (fixes App Store 2.1(a)).
+  var LEGACY_URL  = 'legacy.html';
   var API_BASE    = 'https://api.mahjmahj.co/api';
 
   // ---------- Cached API data ----------
@@ -986,7 +988,10 @@ input,select{font-family:inherit}
       console.warn('Events API error:', err);
       if (loadingEl){
         loadingEl.style.display = 'block';
-        loadingEl.innerHTML = '<p>Could not load events.</p><button onclick="location.reload()" style="display:inline-block;margin-top:12px;padding:10px 20px;background:var(--coral);color:#FFF;border:0;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button>';
+        loadingEl.innerHTML = '<div class="empty"><svg class="empty-icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>'
+          + '<div class="empty-title">Events need a connection</div>'
+          + '<div class="empty-text">Live games and tournaments load when you’re online. Meanwhile, the Learn, Drills and Score My Hand tabs all work offline.</div>'
+          + '<button onclick="location.reload()" style="display:inline-block;margin-top:14px;padding:10px 20px;background:var(--coral);color:#FFF;border:0;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button></div>';
       }
     });
   }

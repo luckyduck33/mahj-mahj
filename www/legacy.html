@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Bundled offline content for Learn/Drills/Tiles tabs. Extracted from mahjmahj_updated.html on 2026-05-22. Replaces the dead https://app.mahjmahj.co/legacy.html (404). Script block intentionally omitted — host app only extracts sections by id. -->
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/*
+  ════════════════════════════════════════════
+  DESIGN TOKENS — v7 (EARTHY PALETTE)
+  PALETTE DIRECTION: earthy, warm, organic
+
+  FROM v5: chalk/putty base, tomato+periwinkle+pool
+  TO   v7: sand/linen base, terracotta+teal+olive,
+           warm-espresso text, one dark strategy stripe
+  ════════════════════════════════════════════
+*/
+:root {
+  /* ── LIGHT BASES ── */
+  --sand:        #E8E0D4;   /* hero bg — warm sand, deepened */
+  --linen:       #F0EADF;   /* general light section bg */
+  --paper:       #F5F2EB;   /* near-white for tiles, events */
+  --clay:        #D8CEBC;   /* slightly deeper, for details */
+  --teal-wash:   #E6EDEC;   /* pale teal-tinted section */
+  --warm-wash:   #F0E8DC;   /* warm near-white — warmer */
+
+  /* ── PALE TINTED PANELS (types triptych) ── */
+  --terra-pale:  #EDE0D4;   /* Chinese: pale terracotta — richer */
+  --teal-pale:   #DDE8E6;   /* Taiwanese: pale teal mist — richer */
+  --olive-pale:  #E4E8D8;   /* American: pale olive — richer */
+
+  /* ── SURFACE TONES ── */
+
+  /* ── DARK ── */
+  --espresso:    #2A201A;   /* primary text, footer bg, strategy bg — slightly deeper */
+  --walnut:      #4A3E34;   /* secondary text */
+  --stone:       #787064;   /* tertiary text */
+  --dust:        #9E9488;   /* caption / meta text */
+  --bone:        #D4CCC0;   /* light borders / dividers */
+
+  /* ── ACCENT 1: TERRACOTTA (primary) ── */
+  --terra:       #C85A3A;   /* warm orange-red — primary accent, CTAs */
+  --terra-mid:   #D86848;   /* slightly lighter hover */
+  --terra-pale2: #E8C0B0;   /* very pale version */
+  --terra-deep:  #8A3820;   /* deep version */
+
+  /* ── ACCENT 2: TEAL MIST ── */
+  --teal:        #6A9E9C;   /* cool sage-teal — slightly richer */
+  --teal-soft:   #92BAB8;   /* softer */
+  --teal-light:  #C8DCD8;   /* very pale tint */
+  --teal-deep:   #3E6E6C;   /* deep */
+
+  /* ── ACCENT 3: MUSTARD ── */
+  --mustard:     #C89E38;   /* warm gold — slightly richer */
+  --mustard-soft:#DCBE60;   /* lighter */
+  --mustard-pale:#EDE4C8;   /* very pale */
+
+  /* ── ACCENT 4: OLIVE ── */
+  --olive:       #7A8460;   /* earthy green — slightly richer */
+  --olive-soft:  #98A280;   /* lighter */
+  --olive-pale2: #D4DAC4;   /* very pale */
+
+  /* ── TEXT ON LIGHT (main usage) ── */
+  --t1:          #2A201A;   /* espresso — primary headings */
+  --t2:          #4A3E34;   /* walnut — body text */
+  --t3:          #78706A;   /* stone — secondary */
+  --t4:          #9E9488;   /* dust — captions, meta */
+
+  /* ── TEXT ON DARK (strategy section, footer) ── */
+  --td1:         #F5F4EF;   /* cream */
+  --td2:         #A89E94;   /* light mid */
+  --td3:         #6A6054;   /* dim */
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--linen);
+  color: var(--t2);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 300;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+/* ════════════════════════════════════════
+   NAV — light mode
+   Default: transparent, espresso text
+   Scrolled: chalk bg, espresso text
+════════════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 2.5rem;
+  transition: background 0.4s, border-color 0.4s;
+}
+nav.scrolled {
+  background: rgba(240, 234, 223, 0.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(44, 36, 32, 0.08);
+}
+
+
+
+.nav-logo {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.2rem;
+  list-style: none;
+  align-items: center;
+}
+.nav-links a {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.nav-links a:hover { color: rgba(255,255,255,0.75); }
+nav.scrolled .nav-links a { color: var(--stone); text-shadow: none; }
+nav.scrolled .nav-links a:hover { color: var(--espresso); }
+.nav-cta {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #F5F2EC !important;
+  background: var(--terra);
+  padding: 0.5rem 1.2rem;
+  border-radius: 100px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s !important;
+}
+.nav-cta:hover { background: var(--terra-mid) !important; transform: translateY(-1px); }
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+.hamburger span { display: block; width: 20px; height: 1.5px; background: #fff; transition: background 0.3s; }
+nav.scrolled .hamburger span { background: var(--espresso); }
+
+/* ════════════════════════════════════════
+   HERO — v5
+
+   WHAT CHANGED from v4:
+   • Background: cool graphite ink #0C0C14 → CHALK #ECEAE3
+   • Top MAHJ: cream → TOMATO RED #E53525
+   • Bottom MAHJ: periwinkle → ESPRESSO #1C1410
+   • Divider: tomato red → PERIWINKLE #6868C0
+   • Atmospheric glow: dark blue-violet → barely-there warm
+   • Frame: cool periwinkle hairline → thin espresso hairline
+   • Eyebrow: silver → ash/graphite
+   • Subtitle: cool mid gray → graphite
+   • Types: graphite, tomato dots
+   • CTAs: tomato solid + espresso ghost
+   • Overall register: DARK & MOODY → LIGHT & EDITORIAL
+════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  background-image: url('hero.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-color: var(--espresso);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
+  padding: 2rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dark overlay for text readability */
+.hero-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.15) 40%,
+    rgba(0, 0, 0, 0.45) 75%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 700px;
+}
+
+.hero-spacer {
+  height: 40vh;
+}
+
+.hero-eyebrow {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0;
+  position: absolute;
+  top: 7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  white-space: nowrap;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  display: none;
+}
+
+
+.hero-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 300;
+  font-style: italic;
+  font-size: 1.25rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 1.2rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Types row */
+.hero-types {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+.hero-type {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.hero-type-sep {
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+}
+
+/* CTAs — terracotta solid + cream ghost on mat */
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
+
+.btn-solid {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #F5F4EF;
+  background: var(--terra);
+  padding: 0.88rem 2rem;
+  border-radius: 100px;
+  text-decoration: none;
+  border: 1.5px solid var(--terra);
+  cursor: pointer;
+  display: inline-block;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-solid:hover { background: var(--terra-mid); border-color: var(--terra-mid); transform: translateY(-1px); }
+
+.btn-ghost {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  padding: 0.88rem 2rem;
+  border-radius: 100px;
+  text-decoration: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: inline-block;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.btn-ghost:hover { background: rgba(255, 255, 255, 0.2); border-color: #fff; color: #fff; }
+
+/* Ghost on dark: cream border (used in strategy section) */
+.btn-ghost-dark {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--td2);
+  background: transparent;
+  padding: 0.88rem 2rem;
+  border-radius: 100px;
+  text-decoration: none;
+  border: 1.5px solid rgba(245, 244, 239, 0.22);
+  cursor: pointer;
+  display: inline-block;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-ghost-dark:hover { border-color: var(--td1); color: var(--td1); }
+
+.hero-scroll {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.5;
+  animation: floatDown 3s ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.6);
+}
+.hero-scroll span {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.hero-scroll-line { width: 1px; height: 38px; background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent); }
+
+@keyframes floatDown {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(7px); }
+}
+
+/* ════════════════════════════════════════
+   MARQUEE — tomato red
+   The loudest graphic moment. Unchanged from v4.
+   White on red = editorial cheeky stripe.
+   Works equally well after a light hero.
+════════════════════════════════════════ */
+.marquee-stripe {
+  background: linear-gradient(90deg, #BA5030, var(--terra), #D06840);
+  overflow: hidden;
+  padding: 1rem 0;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: roll 30s linear infinite;
+}
+.marquee-item {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 252, 245, 0.92);
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  white-space: nowrap;
+}
+.marquee-item::after {
+  content: '◆';
+  font-size: 0.35rem;
+  opacity: 0.5;
+}
+@keyframes roll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ════════════════════════════════════════
+   SHARED
+════════════════════════════════════════ */
+.sec-inner { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; }
+
+/* Labels on light */
+.label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--terra);
+  display: block;
+}
+.label.peri  { color: var(--teal); }
+.label.pool  { color: var(--olive); }
+.label.dark  { color: var(--stone); }
+/* Label on dark bg */
+.label-dark {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--terra);
+  display: block;
+}
+
+/* ════════════════════════════════════════
+   INTRO STATEMENT — pale periwinkle wash
+
+   WHAT CHANGED from v4:
+   Hero and previous section were warm-dark.
+   Now hero is chalk, so intro gets a
+   COOL register shift: pale peri-wash.
+   Creates: warm-chalk → red stripe → cool-lavender
+   That temperature sequence IS editorial rhythm.
+════════════════════════════════════════ */
+.intro-statement {
+  background: var(--warm-wash);
+  padding: 8rem 2.5rem;
+  text-align: center;
+  border-top: 3px solid var(--terra);
+}
+.intro-inner {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+}
+.intro-inner h2 {
+  font-family: 'Poppins', sans-serif;
+  font-style: normal;
+  font-weight: 300;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  line-height: 1.35;
+  color: var(--t1);
+}
+.intro-inner h2 strong {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-style: normal;
+  font-size: 0.72em;
+  color: var(--terra);
+}
+.intro-inner p {
+  font-size: 0.96rem;
+  color: var(--t3);
+  max-width: 440px;
+  line-height: 1.78;
+  font-weight: 300;
+}
+.intro-stats {
+  display: flex;
+  gap: 4rem;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(200, 90, 58, 0.15);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stat-i { text-align: center; }
+.stat-n {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: 2.3rem;
+  color: var(--t1);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+.stat-n em { color: var(--terra); font-style: normal; }
+.stat-d {
+  font-size: 0.75rem;
+  color: var(--t4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ════════════════════════════════════════
+   TYPES TRIPTYCH — pale tinted panels
+
+   WHAT CHANGED from v4:
+   Dark ink panels (#1A100C, #0A1420, #0E0E1E)
+   → PALE TINTED panels (blush, sky, lavender)
+
+   This is the biggest structural departure.
+   Instead of dark color-blocking, each tradition
+   gets its own pale tint — like a magazine feature
+   spread. Espresso text on pale fields.
+   The accent lines at top pop more on pale bgs.
+════════════════════════════════════════ */
+#types { background: var(--linen); position: relative; padding: 8rem 0; }
+
+.types-label-row {
+  padding: 4.5rem 2.5rem 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.types-label-row h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  color: var(--t1);
+  letter-spacing: -0.02em;
+}
+.types-label-row p {
+  font-size: 0.88rem;
+  color: var(--t3);
+  max-width: 340px;
+  line-height: 1.72;
+  font-weight: 300;
+}
+
+.types-triptych {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 76vh;
+}
+.type-panel {
+  position: relative;
+  padding: 3.5rem 2.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  cursor: default;
+  transition: background 0.3s, transform 0.25s, box-shadow 0.25s;
+}
+a.type-panel {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+a.type-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 24px rgba(26,20,16,0.06);
+}
+a.type-panel:hover .type-panel-link {
+  opacity: 1;
+}
+/* Ghost numeral — espresso at very low opacity */
+.type-panel::before {
+  content: attr(data-num);
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: 18rem;
+  line-height: 1;
+  position: absolute;
+  bottom: -2rem;
+  right: -1.5rem;
+  color: var(--espresso);
+  opacity: 0.04;
+  pointer-events: none;
+  letter-spacing: -0.05em;
+}
+/* Accent line at top — more visible on pale bg */
+.type-panel::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+/* Pale tinted panels */
+.type-panel.p-warm  { background: var(--terra-pale);    border-right: 1px solid rgba(26,20,16,0.05); }
+.type-panel.p-teal  { background: var(--teal-pale);  border-right: 1px solid rgba(26,20,16,0.05); }
+.type-panel.p-olive  { background: var(--olive-pale); }
+.type-panel.p-warm::after  { background: var(--terra); opacity: 0.65; }
+.type-panel.p-teal::after  { background: var(--teal);   opacity: 0.65; }
+.type-panel.p-olive::after  { background: var(--olive);  opacity: 0.6; }
+.type-panel.p-warm:hover   { background: #E8D8CE; }
+.type-panel.p-teal:hover   { background: #D0E2DF; }
+.type-panel.p-olive:hover   { background: #DAE0CC; }
+
+.type-panel-num {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--stone);
+  opacity: 0.7;
+  margin-bottom: 2.5rem;
+  display: block;
+}
+.type-panel h3 {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+  color: var(--t1);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 0.7rem;
+}
+.type-panel-sub {
+  font-family: 'Poppins', sans-serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--t3);
+  font-weight: 300;
+  margin-bottom: 1.8rem;
+  display: block;
+}
+.type-panel p {
+  font-size: 0.87rem;
+  color: var(--t3);
+  line-height: 1.82;
+  font-weight: 300;
+  margin-bottom: 2rem;
+}
+.type-traits { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 2rem; }
+.trait {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  background: rgba(26, 20, 16, 0.05);
+  border: 1px solid rgba(26, 20, 16, 0.12);
+  border-radius: 100px;
+  color: var(--stone);
+}
+/* Per-panel trait chips */
+.type-panel.p-teal .trait { background: rgba(122,172,170,0.08); border-color: rgba(122,172,170,0.2); color: var(--teal); }
+.type-panel.p-olive .trait { background: rgba(138,145,107,0.08); border-color: rgba(138,145,107,0.2); color: var(--olive); }
+
+.type-panel-link {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
+}
+.type-panel.p-warm .type-panel-link { color: var(--terra); opacity: 0.7; }
+.type-panel.p-teal .type-panel-link { color: var(--teal);   opacity: 0.7; }
+.type-panel.p-olive .type-panel-link { color: var(--olive);  opacity: 0.7; }
+.type-panel-link:hover { opacity: 1; }
+
+/* ════════════════════════════════════════
+   TILES — paper near-white
+   (light, mostly unchanged — content is right)
+════════════════════════════════════════ */
+#tiles { background: var(--paper); color: var(--t1); padding: 8rem 0; position: relative; border-top: 1px solid var(--bone); }
+.tiles-header {
+  max-width: 1200px; margin: 0 auto; padding: 0 2.5rem;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6rem;
+  align-items: end; margin-bottom: 5rem;
+}
+.tiles-header-left .label { color: var(--stone); }
+.tiles-header-left h2 {
+  font-family: 'Unbounded', sans-serif; font-weight: 900;
+  font-size: clamp(2rem, 4vw, 3rem); color: var(--t1);
+  letter-spacing: -0.02em; line-height: 1.05; margin-top: 0.8rem;
+}
+.tiles-header-right p { font-size: 0.92rem; color: var(--t3); line-height: 1.8; font-weight: 300; margin-bottom: 1.2rem; }
+.tiles-header-right strong { color: var(--t1); font-weight: 500; }
+
+.tiles-families {
+  max-width: 1200px; margin: 0 auto; padding: 0 2.5rem;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: rgba(26,20,16,0.06);
+  border: 1px solid rgba(26,20,16,0.06); margin-bottom: 5rem;
+}
+.tile-fam { background: var(--paper); padding: 2.5rem 2rem; transition: background 0.2s; }
+.tile-fam:hover { background: #E8E0D0; }
+.tile-fam.span2 { grid-column: span 2; }
+.tile-fam-icon { font-size: 1.5rem; margin-bottom: 1rem; display: block; }
+.tile-fam h4 { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 0.8rem; color: var(--t1); letter-spacing: -0.01em; margin-bottom: 0.55rem; }
+.tile-fam p { font-size: 0.83rem; color: var(--t3); line-height: 1.75; font-weight: 300; }
+.joker-callout { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 0.78em; color: var(--terra); }
+
+.tiles-visual { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; }
+.tiles-visual .label { color: var(--stone); margin-bottom: 1.5rem; display: block; }
+.tile-row {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.8rem;
+  padding: 2rem; background: linear-gradient(135deg, #D8CEB8, #CEC4AE); border: 1px solid rgba(26,20,16,0.07); border-radius: 4px;
+}
+.tile-group { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.tile-group-tiles { display: flex; gap: 0.35rem; }
+.tile-sep { font-size: 0.65rem; color: var(--dust); display: flex; align-items: center; height: 66px; padding: 0 0.1rem; }
+.tile {
+  width: 48px; height: 64px; border-radius: 4px;
+  background: linear-gradient(170deg, #F8F2DC, #EDE4C4);
+  box-shadow:
+    0 1px 0 #C8B888,
+    0 2px 0 #BAA878,
+    0 3px 8px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    inset 0 -1px 2px rgba(0,0,0,0.04);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: default; transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.05rem; line-height: 1;
+}
+.tile:hover { transform: translateY(-4px); box-shadow: 0 1px 0 #C8B888, 0 2px 0 #BAA878, 0 8px 20px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.55); }
+.tile.bam      { color: #1A5C2A; }
+.tile.crak     { color: #B82020; }
+.tile.dot      { color: #1A3A7A; }
+.tile.wind     { color: #2A2018; font-size: 0.88rem; }
+.tile.dragon-r { color: #B82020; }
+.tile.dragon-g { color: #1A5C2A; }
+.tile.dragon-w { color: #4A4030; border: 1px solid #D0C090; }
+.tile.flower   { color: #7A2A7A; font-size: 1.3rem; }
+.tile.joker    { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.04em; color: #9A2020; background: linear-gradient(135deg, #F4E4A8, #E8CC80); }
+.tile-lbl { font-family: 'Poppins', sans-serif; font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dust); text-align: center; }
+
+/* ════════════════════════════════════════
+   STRATEGY — THE ONE DARK SECTION
+
+   WHAT CHANGED from v4:
+   v4: cool ink-mid #14141E (one of many dark sections)
+   v5: ESPRESSO #1C1410 — the ONLY dark section
+
+   On a light-base site, a single dark section
+   creates the editorial "break" that gives rhythm.
+   Espresso (warm-dark) vs the cool chalky base
+   above and below creates a richer contrast than
+   blue-black would.
+════════════════════════════════════════ */
+#strategy { background: linear-gradient(180deg, #2A201A, #241C16); padding: 8rem 0; }
+
+.strategy-grid {
+  max-width: 1200px; margin: 0 auto; padding: 0 2.5rem;
+  display: grid; grid-template-columns: 340px 1fr; gap: 6rem; align-items: start;
+}
+.strategy-sidebar { position: sticky; top: 7rem; }
+.strategy-sidebar .label-dark { margin-bottom: 1rem; }
+.strategy-sidebar h2 {
+  font-family: 'Unbounded', sans-serif; font-weight: 900;
+  font-size: clamp(1.8rem, 2.8vw, 2.4rem); color: var(--td1);
+  letter-spacing: -0.02em; line-height: 1.0; margin-bottom: 1.2rem;
+}
+.strategy-sidebar p { font-size: 0.87rem; color: var(--td2); line-height: 1.8; font-weight: 300; margin-bottom: 2rem; }
+.strategy-sidebar blockquote { border-left: 2px solid var(--terra); padding-left: 1.2rem; margin-bottom: 2rem; }
+.strategy-sidebar blockquote p {
+  font-family: 'Poppins', sans-serif; font-style: italic; font-size: 1rem;
+  color: var(--td1); margin-bottom: 0.4rem; line-height: 1.5;
+}
+.strategy-sidebar blockquote cite {
+  font-size: 0.68rem; color: var(--td3); letter-spacing: 0.1em;
+  font-style: normal; text-transform: uppercase; font-family: 'Poppins', sans-serif;
+}
+
+.tips-stack { display: flex; flex-direction: column; }
+.tip {
+  padding: 1.8rem 0; border-bottom: 1px solid rgba(245,244,239,0.06);
+  display: grid; grid-template-columns: 48px 1fr; gap: 1.5rem;
+  align-items: start; border-radius: 2px; cursor: default; transition: padding 0.2s, background 0.2s;
+}
+.tip:last-child { border-bottom: none; }
+.tip:hover { background: rgba(245,244,239,0.03); padding-left: 1rem; padding-right: 1rem; margin: 0 -1rem; }
+.tip-n { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 0.65rem; color: var(--terra); opacity: 0.45; padding-top: 0.2rem; }
+.tip-body h4 { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 0.86rem; color: var(--td1); letter-spacing: -0.01em; margin-bottom: 0.55rem; line-height: 1.3; }
+.tip-body p { font-size: 0.86rem; color: var(--td2); line-height: 1.82; font-weight: 300; }
+.tip-tag {
+  display: inline-block; font-family: 'Poppins', sans-serif; font-size: 0.57rem;
+  font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.14rem 0.5rem; border-radius: 100px; margin-top: 0.5rem;
+}
+.tag-all  { background: rgba(200,90,58,0.12); color: var(--terra-mid); }
+.tag-amer { background: rgba(138,145,107,0.18); color: var(--olive-soft); }
+.tag-tw   { background: rgba(122,172,170,0.16); color: var(--teal-soft); }
+.tag-cn   { background: rgba(200,90,58,0.10); color: var(--terra-pale2); }
+
+/* ════════════════════════════════════════
+   QUIZ SECTION — cool wash (light)
+   Multiple-choice commit-first format.
+   Replaces the old flip-card mechanic.
+════════════════════════════════════════ */
+#flashcards { background: var(--warm-wash); padding: 8rem 0; position: relative; }
+
+.fc-layout { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; }
+.fc-left .label { margin-bottom: 1rem; }
+.fc-left h2 { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: clamp(1.8rem, 3vw, 2.6rem); color: var(--t1); letter-spacing: -0.02em; line-height: 1.0; margin-bottom: 1.2rem; }
+.fc-left p { font-size: 0.87rem; color: var(--t3); line-height: 1.8; font-weight: 300; margin-bottom: 1.5rem; }
+
+.mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.mode-btn {
+  background: rgba(26,20,16,0.03); border: 1px solid rgba(26,20,16,0.1);
+  border-radius: 3px; padding: 1.1rem 0.6rem; text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.mode-btn.active, .mode-btn:hover { background: rgba(200,90,58,0.07); border-color: rgba(200,90,58,0.3); }
+.mode-btn-icon { font-size: 1.2rem; display: block; margin-bottom: 0.35rem; }
+.mode-btn-name { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 0.55rem; color: var(--t1); letter-spacing: 0.04em; display: block; margin-bottom: 0.15rem; line-height: 1.3; }
+.mode-btn-count { font-size: 0.6rem; color: var(--t4); font-family: 'Poppins', sans-serif; }
+
+/* Progress bar */
+.fc-right { display: flex; flex-direction: column; align-items: center; }
+.fc-prog { display: flex; align-items: center; gap: 1rem; width: 100%; max-width: 460px; margin-bottom: 1.4rem; }
+.fc-prog-bar { flex: 1; height: 2px; background: rgba(26,20,16,0.1); border-radius: 1px; overflow: hidden; }
+.fc-prog-fill { height: 100%; background: var(--teal); border-radius: 1px; transition: width 0.4s ease; }
+.fc-prog-txt { font-family: 'Poppins', sans-serif; font-size: 0.68rem; color: var(--t4); white-space: nowrap; }
+
+/* Question card — single face, no flip */
+.quiz-card {
+  width: 100%; max-width: 460px;
+  background: var(--paper);
+  border: 1px solid rgba(26,20,16,0.1);
+  border-radius: 5px;
+  box-shadow: 0 2px 16px rgba(26,20,16,0.06);
+  padding: 2rem 2rem;
+  min-height: 110px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1rem;
+}
+.quiz-q {
+  font-family: 'Poppins', sans-serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--t1);
+  line-height: 1.45;
+  text-align: center;
+  margin: 0;
+}
+
+/* Choice buttons */
+.quiz-choices {
+  display: flex; flex-direction: column; gap: 0.55rem;
+  width: 100%; max-width: 460px;
+  margin-bottom: 0.5rem;
+}
+.quiz-choice {
+  width: 100%;
+  text-align: left;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--t2);
+  background: var(--paper);
+  border: 1px solid rgba(26,20,16,0.12);
+  border-radius: 5px;
+  padding: 0.9rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+.quiz-choice:hover:not(:disabled) { background: #EAE4D8; border-color: rgba(44,36,32,0.22); }
+.quiz-choice:disabled { cursor: default; }
+/* Answer reveal states */
+.quiz-choice.correct {
+  background: rgba(26,140,80,0.10);
+  border-color: rgba(26,140,80,0.40);
+  color: #1A5C2A;
+  font-weight: 500;
+}
+.quiz-choice.wrong {
+  background: rgba(200,90,58,0.08);
+  border-color: rgba(200,90,58,0.30);
+  color: var(--terra);
+}
+.quiz-choice.dim { opacity: 0.40; }
+
+/* Explanation — appears after answering */
+.quiz-expl {
+  width: 100%; max-width: 460px;
+  font-size: 0.82rem;
+  color: var(--t3);
+  line-height: 1.65;
+  font-weight: 300;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1.2rem;
+  background: rgba(122,172,170,0.06);
+  border-left: 3px solid var(--teal);
+  border-radius: 2px;
+}
+
+/* Next button */
+.quiz-next {
+  width: 100%; max-width: 460px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.82rem;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.9rem;
+  background: rgba(122,172,170,0.12);
+  color: var(--teal-deep);
+  border: 1px solid rgba(122,172,170,0.28);
+}
+.quiz-next:hover { background: rgba(122,172,170,0.22); }
+
+/* Score display */
+.fc-scores { display: flex; gap: 2.5rem; margin-top: 1.5rem; }
+.fc-score-n { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 1.7rem; color: var(--t1); display: block; letter-spacing: -0.02em; line-height: 1; margin-bottom: 0.25rem; }
+.fc-score-n.green { color: #2A7A48; }
+.fc-score-l { font-family: 'Poppins', sans-serif; font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--t4); }
+
+/* ════════════════════════════════════════
+   EVENTS — light putty
+════════════════════════════════════════ */
+#events { background: var(--linen); padding: 8rem 0; position: relative; }
+
+.events-hdr { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2.5rem; gap: 2rem; flex-wrap: wrap; }
+.events-hdr-left h2 { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: var(--t1); letter-spacing: -0.02em; line-height: 1.0; margin: 0.8rem 0 0; }
+.events-hdr-left p { font-size: 0.87rem; color: var(--t3); font-weight: 300; line-height: 1.72; max-width: 320px; margin-top: 0.7rem; }
+
+.events-filters { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
+.ef { font-family: 'Poppins', sans-serif; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.35rem 0.8rem; border-radius: 100px; border: 1px solid rgba(26,20,16,0.14); background: transparent; color: var(--t3); cursor: pointer; transition: all 0.2s; }
+.ef.active, .ef:hover { border-color: var(--terra); background: rgba(200,90,58,0.07); color: var(--terra); }
+
+.events-grid { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(26,20,16,0.07); border: 1px solid rgba(26,20,16,0.07); margin-bottom: 2.5rem; }
+.ev { background: var(--linen); padding: 2.2rem 2rem; cursor: pointer; transition: background 0.2s; position: relative; overflow: hidden; }
+.ev::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
+.ev:hover { background: #E8E5DC; }
+.ev:hover::before { transform: scaleX(1); }
+.ev.ac-tom::before  { background: var(--terra); }
+.ev.ac-peri::before { background: var(--teal); }
+.ev.ac-pool::before { background: var(--olive); }
+.ev.span2 { grid-column: span 2; }
+
+.ev-badge { display: inline-block; font-family: 'Poppins', sans-serif; font-size: 0.56rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.16rem 0.5rem; border-radius: 100px; margin-bottom: 0.9rem; }
+.b-tour   { background: rgba(122,172,170,0.14); color: var(--teal-deep); }
+.b-lesson { background: rgba(200,90,58,0.10); color: var(--terra); }
+.b-game   { background: rgba(138,145,107,0.12); color: var(--olive); }
+.b-online { background: rgba(212,168,72,0.12); color: var(--mustard); }
+
+.ev h4 { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--t1); letter-spacing: -0.01em; line-height: 1.3; margin-bottom: 0.9rem; }
+.ev.span2 h4 { font-size: 1.02rem; }
+.ev p { font-size: 0.82rem; color: var(--t3); line-height: 1.72; font-weight: 300; margin-bottom: 0.9rem; }
+.ev-meta { font-family: 'Poppins', sans-serif; font-size: 0.72rem; color: var(--t4); display: flex; flex-direction: column; gap: 0.22rem; }
+
+.events-note { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; }
+.events-note-inner { border: 1px dashed rgba(26,20,16,0.14); padding: 2rem; text-align: center; border-radius: 3px; }
+.events-note-inner p { font-size: 0.82rem; color: var(--t4); margin-bottom: 1.2rem; font-style: italic; font-family: 'Poppins', sans-serif; line-height: 1.7; }
+
+
+/* ── DATE BADGE — corner triangle ── */
+.ev-date-badge {
+  position: absolute;
+  top: 0; left: 0;
+  width: 5.4rem; height: 5.4rem;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+.ev-date-badge::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  border-style: solid;
+  border-width: 5.4rem 5.4rem 0 0;
+  border-color: var(--terra) transparent transparent transparent;
+}
+.ev.ac-peri .ev-date-badge::before { border-color: var(--teal) transparent transparent transparent; }
+.ev.ac-pool .ev-date-badge::before { border-color: var(--olive) transparent transparent transparent; }
+
+.ev-date-badge-inner {
+  position: absolute;
+  top: 0.45rem; left: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: rotate(0deg);
+  z-index: 3;
+  pointer-events: none;
+}
+.ev-date-month {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+  line-height: 1;
+}
+.ev-date-day {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.05;
+  margin-top: 0.05rem;
+}
+
+/* Card padding adjustment for badge */
+.ev { padding-top: 2.2rem; padding-left: 2rem; }
+.ev.has-date-badge { padding-top: 1.4rem; padding-left: 4.8rem; }
+
+/* Hover: brighten badge */
+.ev:hover .ev-date-badge::before { filter: brightness(1.12); }
+.ev:hover { box-shadow: 0 4px 18px rgba(26,20,16,0.08); transform: translateY(-1px); transition: background 0.2s, box-shadow 0.25s, transform 0.25s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ev-date-badge { width: 4.4rem; height: 4.4rem; }
+  .ev-date-badge::before { border-width: 4.4rem 4.4rem 0 0; }
+  .ev-date-badge-inner { top: 0.35rem; left: 0.28rem; }
+  .ev-date-month { font-size: 0.46rem; }
+  .ev-date-day { font-size: 1.05rem; }
+  .ev.has-date-badge { padding-left: 3.8rem; }
+}
+@media (max-width: 480px) {
+  .ev-date-badge { width: 3.8rem; height: 3.8rem; }
+  .ev-date-badge::before { border-width: 3.8rem 3.8rem 0 0; }
+  .ev-date-badge-inner { top: 0.28rem; left: 0.22rem; }
+  .ev-date-month { font-size: 0.42rem; }
+  .ev-date-day { font-size: 0.92rem; }
+  .ev.has-date-badge { padding-left: 3.2rem; padding-top: 1.2rem; }
+}
+
+
+/* Recurring event badge adjustments */
+.ev-date-day.ev-date-recurring {
+  font-size: 1.05rem;
+  opacity: 0.9;
+}
+
+/* ════════════════════════════════════════
+   FOOTER — deep espresso
+════════════════════════════════════════ */
+footer { background: linear-gradient(180deg, #2A201A, #221A14); border-top: 3px solid var(--terra); padding: 5rem 2.5rem 2.5rem; position: relative; }
+.footer-inner { max-width: 1200px; margin: 0 auto; }
+.footer-top { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr; gap: 4rem; margin-bottom: 4rem; }
+.footer-logo-word { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 1.1rem; color: var(--td1); letter-spacing: -0.01em; display: block; }
+.footer-logo-rule { display: block; width: 28px; height: 1px; background: var(--terra); opacity: 0.5; margin: 4px 0; }
+.footer-tagline { font-family: 'Poppins', sans-serif; font-style: italic; font-size: 0.88rem; color: var(--td3); margin: 0.7rem 0 1rem; display: block; }
+.footer-desc { font-size: 0.78rem; color: var(--td3); line-height: 1.75; font-weight: 300; max-width: 230px; }
+.footer-col h5 { font-family: 'Poppins', sans-serif; font-size: 0.58rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra); opacity: 0.6; margin-bottom: 1.2rem; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.footer-col a { font-size: 0.78rem; color: var(--td3); text-decoration: none; transition: color 0.2s; }
+.footer-col a:hover { color: var(--td1); }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid rgba(200,90,58,0.1); flex-wrap: wrap; gap: 1rem; }
+.footer-copy { font-size: 0.72rem; color: var(--td3); }
+.footer-btm-logo { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 0.6rem; color: rgba(245,242,236,0.06); letter-spacing: 0.1em; }
+
+/* ════════════════════════════════════════
+   ENTRANCE ANIMATIONS
+════════════════════════════════════════ */
+.fade-up { opacity: 0; transform: translateY(16px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.fade-up.in { opacity: 1; transform: translateY(0); }
+.d1 { transition-delay: 0.12s; }
+.d2 { transition-delay: 0.24s; }
+.d3 { transition-delay: 0.36s; }
+.d4 { transition-delay: 0.48s; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+@media (max-width: 960px) {
+  .types-triptych { grid-template-columns: 1fr; min-height: auto; }
+  .tiles-header { grid-template-columns: 1fr; gap: 2.5rem; }
+  .tiles-families { grid-template-columns: 1fr 1fr; }
+  .tile-fam.span2 { grid-column: span 2; }
+  .strategy-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .strategy-sidebar { position: static; }
+  .fc-layout { grid-template-columns: 1fr; gap: 3.5rem; }
+  .events-grid { grid-template-columns: 1fr 1fr; }
+  .ev.span2 { grid-column: span 2; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+}
+@media (max-width: 640px) {
+  nav { padding: 1.1rem 1.5rem; }
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--linen); z-index: 300; justify-content: center; align-items: center; gap: 1.8rem;
+    padding: 2rem; list-style: none; margin: 0;
+  }
+  .nav-links.open li { list-style: none; text-align: center; }
+  .nav-links.open a { font-size: 1.1rem; color: var(--t1) !important; text-shadow: none !important; font-weight: 500; letter-spacing: 0.02em; }
+  .nav-links.open .nav-cta { color: #F5F2EC !important; font-size: 0.85rem; margin-top: 0.5rem; }
+  .hamburger { display: flex; z-index: 301; }
+  .hero { padding: 5.5rem 1.5rem 4rem; }
+  .hero-eyebrow { margin-bottom: 2rem; }
+  .sec-inner, .tiles-header, .tiles-families, .tiles-visual, .strategy-grid,
+  .fc-layout, .events-hdr, .events-filters, .events-grid, .events-note, .types-label-row { padding-left: 1.25rem; padding-right: 1.25rem; }
+  #types, #tiles, #strategy, #flashcards, #events { padding: 5rem 0; }
+  .tiles-families { grid-template-columns: 1fr; }
+  .tile-fam.span2 { grid-column: span 1; }
+  .events-grid { grid-template-columns: 1fr; }
+  .ev.span2 { grid-column: span 1; }
+  .footer-top { grid-template-columns: 1fr; gap: 2rem; }
+  .intro-stats { gap: 2rem; }
+  .hero-types { flex-wrap: wrap; justify-content: center; gap: 0.8rem; }
+}
+
+/* ════════════════════════════════════════
+   VARIANT EXPLORE SECTIONS
+   #chinese · #taiwanese · #american
+════════════════════════════════════════ */
+.variant-section { padding: 6rem 0; }
+.variant-inner   { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; position: relative; }
+
+/* ── Section header ── */
+.variant-header { margin-bottom: 3.5rem; }
+.variant-header h2 {
+  font-family: 'Unbounded', sans-serif; font-weight: 900;
+  font-size: clamp(1.8rem, 3vw, 2.6rem); color: var(--t1);
+  letter-spacing: -0.02em; line-height: 1.1; margin: 0.8rem 0 1rem;
+}
+.variant-header > p { font-size: 0.87rem; color: var(--t3); line-height: 1.82; font-weight: 300; max-width: 680px; }
+.trait-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.2rem; }
+
+/* ── Content blocks ── */
+.variant-block { margin-bottom: 3.5rem; }
+.variant-block h3 {
+  font-family: 'Unbounded', sans-serif; font-weight: 700;
+  font-size: 0.95rem; color: var(--t1); margin-bottom: 1rem; letter-spacing: -0.01em;
+}
+.variant-block > p {
+  font-size: 0.87rem; color: var(--t3); line-height: 1.82; font-weight: 300; margin-bottom: 0.8rem;
+}
+
+/* ── Rule blocks ── */
+.rule-blocks { display: flex; flex-direction: column; gap: 1rem; }
+.rule-block {
+  padding: 1.2rem 1.4rem;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(26,20,16,0.07);
+  border-radius: 3px;
+}
+.rule-block h5 {
+  font-family: 'Poppins', sans-serif; font-weight: 500;
+  font-size: 0.85rem; color: var(--t1); margin-bottom: 0.4rem;
+}
+.rule-block p {
+  font-family: 'Poppins', sans-serif; font-weight: 300;
+  font-size: 0.83rem; color: var(--t3); line-height: 1.75; margin: 0;
+}
+
+/* ── NMJL callout — American only ── */
+.nmjl-callout {
+  padding: 1.8rem 2rem;
+  background: rgba(122,172,170,0.06);
+  border-left: 3px solid var(--teal);
+  border-radius: 2px;
+}
+.nmjl-callout h4 {
+  font-family: 'Unbounded', sans-serif; font-weight: 700;
+  font-size: 0.9rem; color: var(--t1); margin-bottom: 0.8rem; letter-spacing: -0.01em;
+}
+.nmjl-callout p {
+  font-family: 'Poppins', sans-serif; font-weight: 300;
+  font-size: 0.84rem; color: var(--t3); line-height: 1.78; margin-bottom: 0.55rem;
+}
+.nmjl-callout p:last-child { margin-bottom: 0; }
+
+/* ── Mistake items ── */
+.mistakes-stack { display: flex; flex-direction: column; }
+.mistake-item { padding: 0.85rem 0; border-bottom: 1px solid rgba(26,20,16,0.06); }
+.mistake-item:last-child { border-bottom: none; }
+.mistake-item strong {
+  display: block; font-family: 'Poppins', sans-serif; font-weight: 500;
+  font-size: 0.83rem; color: var(--t1); margin-bottom: 0.25rem;
+}
+.mistake-item p {
+  font-family: 'Poppins', sans-serif; font-weight: 300;
+  font-size: 0.82rem; color: var(--t3); line-height: 1.68; margin: 0;
+}
+
+/* ── CTA block ── */
+.variant-cta {
+  padding: 2.5rem; border-radius: 3px; text-align: center;
+  background: rgba(26,20,16,0.04);
+}
+.variant-cta p {
+  font-size: 0.87rem; color: var(--t3); margin-bottom: 1.2rem;
+  font-family: 'Poppins', sans-serif; font-weight: 300;
+}
+
+/* ── Variant accent buttons ── */
+.btn-teal {
+  font-family: 'Poppins', sans-serif; font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; color: #F5F4EF;
+  background: var(--teal); padding: 0.88rem 2rem; border-radius: 100px;
+  text-decoration: none; border: 1.5px solid var(--teal);
+  cursor: pointer; display: inline-block; transition: background 0.2s, transform 0.15s;
+}
+.btn-teal:hover { background: var(--teal-soft); border-color: var(--teal-soft); transform: translateY(-1px); }
+
+.btn-olive {
+  font-family: 'Poppins', sans-serif; font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; color: #F5F4EF;
+  background: var(--olive); padding: 0.88rem 2rem; border-radius: 100px;
+  text-decoration: none; border: 1.5px solid var(--olive);
+  cursor: pointer; display: inline-block; transition: background 0.2s, transform 0.15s;
+}
+.btn-olive:hover { background: var(--olive-soft); border-color: var(--olive-soft); transform: translateY(-1px); }
+
+@media (max-width: 640px) {
+  .variant-section { padding: 4rem 0; }
+  .variant-inner { padding: 0 1.25rem; }
+  .variant-block { margin-bottom: 2.5rem; }
+}
+
+/* ════════════════════════════════════════
+   MASTERY TRACKING UI
+════════════════════════════════════════ */
+.mastery-dots {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  max-width: 460px;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.mastery-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(26,20,16,0.12);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.mastery-dot.learning { background: rgba(200,90,58,0.60); }
+.mastery-dot.strong   { background: rgba(122,172,170,0.70); }
+.mastery-dot.mastered { background: #2A7A48; }
+.mastery-dot.current  { box-shadow: 0 0 0 2px var(--teal), 0 0 0 4px rgba(122,172,170,0.15); }
+
+.mastery-summary {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  justify-content: center;
+  margin-top: 1rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.72rem;
+  color: var(--t3);
+}
+.mastery-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.mastery-summary-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.reset-progress {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.62rem;
+  color: var(--t4);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  margin-top: 0.8rem;
+  transition: color 0.2s;
+  display: block;
+}
+.reset-progress:hover { color: var(--terra); }
+
+/* ════════════════════════════════════════
+   RULE-SOURCE TAGS
+════════════════════════════════════════ */
+.rule-tag {
+  display: inline-block;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.14rem 0.5rem;
+  border-radius: 100px;
+  margin-top: 0.6rem;
+  margin-right: 0.3rem;
+}
+.rule-tag.rt-common  { background: rgba(26,20,16,0.06);   color: var(--stone); }
+.rule-tag.rt-hk      { background: rgba(229,53,37,0.10);  color: var(--terra); }
+.rule-tag.rt-sichuan { background: rgba(229,53,37,0.10);  color: var(--terra); }
+.rule-tag.rt-mcr     { background: rgba(229,53,37,0.10);  color: var(--terra); }
+.rule-tag.rt-tw      { background: rgba(58,140,176,0.10); color: var(--olive); }
+.rule-tag.rt-nmjl    { background: rgba(104,104,192,0.10);color: var(--teal); }
+.rule-tag.rt-house   { background: rgba(154,148,144,0.12);color: var(--dust); }
+
+/* ════════════════════════════════════════
+   MAHJONG IN THE NEWS
+════════════════════════════════════════ */
+.news-section { background: var(--teal-wash); padding: 8rem 0; position: relative; }
+.news-inner { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; }
+.news-header { margin-bottom: 3rem; }
+.news-header h2 {
+  font-family: 'Unbounded', sans-serif; font-weight: 900;
+  font-size: clamp(1.8rem, 3vw, 2.6rem); color: var(--t1);
+  letter-spacing: -0.02em; line-height: 1.1; margin: 0.8rem 0 0.8rem;
+}
+.news-header > p {
+  font-size: 0.87rem; color: var(--t3); line-height: 1.78; font-weight: 300; max-width: 560px;
+}
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+}
+.news-bucket h3 {
+  font-family: 'Unbounded', sans-serif; font-weight: 700;
+  font-size: 0.78rem; color: var(--t1); letter-spacing: -0.01em;
+  margin-bottom: 1.2rem; padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(122,172,170,0.15);
+}
+.news-card {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(26,20,16,0.06);
+}
+.news-card:last-child { border-bottom: none; }
+.news-card-tag {
+  display: inline-block;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 100px;
+  margin-bottom: 0.5rem;
+  background: rgba(122,172,170,0.12);
+  color: var(--teal);
+}
+.news-card-tag.culture   { background: rgba(200,90,58,0.08);  color: var(--terra); }
+.news-card-tag.identity  { background: rgba(138,145,107,0.10); color: var(--olive); }
+.news-card-tag.community { background: rgba(212,168,72,0.12); color: var(--mustard); }
+.news-card h4 {
+  font-family: 'Unbounded', sans-serif; font-weight: 700;
+  font-size: 0.82rem; color: var(--t1); letter-spacing: -0.01em;
+  line-height: 1.35; margin-bottom: 0.4rem;
+}
+.news-card p {
+  font-family: 'Poppins', sans-serif; font-weight: 300;
+  font-size: 0.78rem; color: var(--t3); line-height: 1.68; margin-bottom: 0.35rem;
+}
+.news-card cite {
+  font-family: 'Poppins', sans-serif; font-size: 0.6rem;
+  font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--dust); font-style: normal;
+}
+@media (max-width: 960px) {
+  .news-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .news-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .news-section { padding: 4rem 0; }
+  .news-inner { padding: 0 1.25rem; }
+}
+
+/* ════════════════════════════════════════
+   INLINE TILE ILLUSTRATIONS
+════════════════════════════════════════ */
+.tile-illus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  padding: 1rem 1.2rem;
+  background: rgba(240,228,192,0.18);
+  border: 1px solid rgba(200,184,136,0.25);
+  border-radius: 4px;
+}
+.tile-illus .tile {
+  width: 42px;
+  height: 56px;
+  font-size: 0.95rem;
+}
+.tile-illus .tile.wind { font-size: 0.78rem; }
+.tile-illus .tile.joker { font-size: 0.45rem; }
+.tile-illus .tile-sep { height: 56px; }
+.tile-illus-label {
+  width: 100%;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dust);
+  margin-top: 0.3rem;
+}
+.tile-illus-caption {
+  width: 100%;
+  font-family: 'Poppins', sans-serif;
+  font-style: italic;
+  font-size: 0.75rem;
+  color: var(--t3);
+  margin-top: 0.2rem;
+}
+.tile-plus {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--dust);
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 0.2rem;
+}
+.hand-display {
+  margin-top: 1rem;
+  padding: 1.2rem 1.4rem;
+  background: rgba(240,228,192,0.18);
+  border: 1px solid rgba(200,184,136,0.25);
+  border-radius: 4px;
+}
+.hand-display-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dust);
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.hand-display-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+.hand-set {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.3rem 0.4rem;
+  background: rgba(255,255,255,0.5);
+  border-radius: 3px;
+  border: 1px solid rgba(26,20,16,0.05);
+}
+.hand-set .tile { width: 38px; height: 50px; font-size: 0.85rem; }
+.hand-set .tile.wind { font-size: 0.7rem; }
+.hand-set-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dust);
+  text-align: center;
+  margin-top: 0.25rem;
+  display: block;
+}
+@media (max-width: 640px) {
+  .tile-illus .tile, .hand-set .tile { width: 36px; height: 48px; font-size: 0.8rem; }
+  .tile-illus .tile.wind, .hand-set .tile.wind { font-size: 0.65rem; }
+  .hand-display { padding: 1rem; }
+}
+
+/* ════════════════════════════════════════
+   NEWS CARD TILE ACCENTS
+════════════════════════════════════════ */
+.news-card-accent {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 0.6rem;
+}
+.news-card-accent .tile {
+  width: 28px;
+  height: 36px;
+  font-size: 0.7rem;
+  border-radius: 3px;
+}
+.news-card-accent .tile small { font-size: 0.35rem; }
+.news-card-accent .tile.wind { font-size: 0.58rem; }
+.news-card-accent .tile.joker { font-size: 0.35rem; }
+.news-card-accent .tile.flower { font-size: 1rem; }
+
+/* ════════════════════════════════════════
+   LOGO IMAGES
+════════════════════════════════════════ */
+.nav-logo-img {
+  height: 42px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+.footer-logo-img {
+  height: 48px;
+  width: auto;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+/* ════════════════════════════════════════
+   EVENTS FILTER GROUPS
+════════════════════════════════════════ */
+.events-filter-group {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2.5rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+.events-filter-group:last-of-type { margin-bottom: 2.5rem; }
+.filter-group-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dust);
+  display: flex;
+  align-items: center;
+  margin-right: 0.4rem;
+}
+
+/* ════════════════════════════════════════
+   PAPER / GRAIN TEXTURE OVERLAY
+   CSS-rendered grain — no external images
+════════════════════════════════════════ */
+
+.intro-statement {
+  position: relative;
+}
+.intro-statement::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.10;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+#strategy {
+  position: relative;
+}
+#strategy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.10;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.80' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Shared paper grain texture ── */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.80' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.10;
+  z-index: 0;
+}
+#tiles.grain::before { opacity: 0.08; }
+#strategy.grain::before { opacity: 0.14; }
+footer.grain::before { opacity: 0.12; }
+
+/* ── Hero mobile adjustments ── */
+@media (max-width: 768px) {
+  .hero {
+    padding: 1.5rem 1.5rem 3rem;
+    min-height: 100svh;
+  }
+  .hero-spacer {
+    height: 35vh;
+  }
+  .hero-eyebrow {
+    top: 5.5rem;
+    font-size: 0.7rem;
+  }
+  .hero-subtitle {
+    font-size: 1.05rem;
+  }
+}
+
+
+/* ── Real events additions ── */
+.ev-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.9rem; }
+.ev-badges .ev-badge { margin-bottom: 0; }
+.b-sold-out { background: rgba(26,20,16,0.08); color: var(--t4); text-decoration: line-through; }
+.b-recurring { background: rgba(122,172,170,0.10); color: var(--teal-deep); }
+.ev-sold-out { opacity: 0.62; }
+.ev-cta { display: inline-block; margin-top: 1rem; font-family: 'Poppins', sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; color: var(--terra); text-decoration: none; border-bottom: 1px solid rgba(200,90,58,0.3); padding-bottom: 1px; transition: color 0.2s, border-color 0.2s; }
+.ev-cta:hover { color: var(--t1); border-color: var(--t1); }
+.ev-cta-disabled { color: var(--t4); border-bottom: none; cursor: default; }
+.ev-meta a { color: var(--teal-deep); text-decoration: none; }
+.ev-meta a:hover { text-decoration: underline; }
+
+/* News card links */
+a.news-card { text-decoration: none; color: inherit; display: block; transition: transform 0.2s, box-shadow 0.2s; }
+a.news-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(42,32,26,0.10); }
+a.news-card:hover h4 { color: var(--terra); }
+.news-card-featured { border: 2px solid var(--terra); position: relative; }
+.news-featured-badge { position: absolute; top: 0.75rem; right: 0.75rem; font-family: 'Poppins', sans-serif; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; background: var(--terra); color: #fff; padding: 0.2rem 0.6rem; border-radius: 100px; }
+</style>
+</head><body>
+<section id="types" class="grain">
+  <div class="types-label-row">
+    <h2 class="fade-up">Three&nbsp;Worlds</h2>
+    <p class="fade-up d2">Same tiles. Completely different games. Each tradition has its own rules, rhythm, and personality.</p>
+  </div>
+  <div class="types-triptych">
+
+    <a href="#chinese" class="type-panel p-warm fade-up" data-num="一">
+      <div>
+        <span class="type-panel-num">01 / Chinese</span>
+        <h3>Chinese<br>Mahjong</h3>
+        <span class="type-panel-sub">The origin. The standard. The obsession.</span>
+        <p>Mahjong's ancestral form spans dozens of regional variants—from Hong Kong competition rules to Sichuan fast-play. It rewards memory, calculation, and the ability to read your opponents before they've finished their thought.</p>
+      </div>
+      <div>
+        <div class="type-traits">
+          <span class="trait">136 Tiles</span>
+          <span class="trait">Regional Variants</span>
+          <span class="trait">Point Scoring</span>
+          <span class="trait">No Jokers</span>
+        </div>
+        <span class="type-panel-link">Explore Chinese Mahjong →</span>
+      </div>
+    </a>
+
+    <a href="#taiwanese" class="type-panel p-teal fade-up d1" data-num="二">
+      <div>
+        <span class="type-panel-num">02 / Taiwanese</span>
+        <h3>Taiwanese<br>Mahjong</h3>
+        <span class="type-panel-sub">Louder. Longer. Deeply social.</span>
+        <p>Played with 16 tiles per hand and a uniquely generous tenpai system. Taiwanese Mahjong is a social institution woven into daily life across Taiwan. Competitive and convivial in equal measure.</p>
+      </div>
+      <div>
+        <div class="type-traits">
+          <span class="trait">144 Tiles</span>
+          <span class="trait">16-Tile Hands</span>
+          <span class="trait">Tenpai Rules</span>
+          <span class="trait">Fang Pao</span>
+        </div>
+        <span class="type-panel-link">Explore Taiwanese Mahjong →</span>
+      </div>
+    </a>
+
+    <a href="#american" class="type-panel p-olive fade-up d2" data-num="三">
+      <div>
+        <span class="type-panel-num">03 / American</span>
+        <h3>American<br>Mahjong</h3>
+        <span class="type-panel-sub">A reinvention. Thriving on its own terms.</span>
+        <p>Introduced to America in the 1920s and evolved ever since. Joker tiles, the annual NMJL card, the Charleston passing ritual, and a completely different winning hand structure. Not simplified—parallel.</p>
+      </div>
+      <div>
+        <div class="type-traits">
+          <span class="trait">152 Tiles</span>
+          <span class="trait">8 Jokers</span>
+          <span class="trait">NMJL Card</span>
+          <span class="trait">Charleston</span>
+        </div>
+        <span class="type-panel-link">Explore American Mahjong →</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  CHINESE MAHJONG — Explore Page
+══════════════════════════════════════ -->
+<section id="chinese" class="variant-section" style="background: var(--terra-pale);">
+  <div class="variant-inner grain">
+
+    <!-- 1. Header -->
+    <div class="variant-header fade-up">
+      <span class="label" style="color: var(--terra)">Chinese Mahjong</span>
+      <h2>The Origin.<br>The Standard.</h2>
+      <p>Chinese Mahjong is the ancestral form of the game — a family of rule sets spanning centuries of regional evolution. From Hong Kong competition play to Sichuan's fast-draw format, every variant shares the same core logic: build a complete hand before your opponents do. Understanding Chinese Mahjong is the foundation for understanding Mahjong at all.</p>
+      <div class="trait-row">
+        <span class="trait">136 Base Tiles</span>
+        <span class="trait">13-Tile Hands</span>
+        <span class="trait">No Jokers</span>
+        <span class="trait">Regional Rulesets</span>
+      </div>
+    </div>
+
+    <!-- 2. Tile Set -->
+    <div class="variant-block fade-up">
+      <h3>The Tile Set</h3>
+      <p>The standard Chinese Mahjong set contains 136 tiles: 36 Bamboo (1–9 × 4), 36 Characters (1–9 × 4), 36 Dots (1–9 × 4), 16 Wind tiles (four directions × 4), and 12 Dragon tiles (three types × 4). There are no Jokers.</p>
+      <p>Many sets include 8 Flower and Season bonus tiles, bringing the total to 144. Whether Flowers are used — and how they score — depends on the regional rule set in play. When in doubt, ask before the first hand.</p>
+    </div>
+
+    <!-- 3. Hand Structure -->
+    <div class="variant-block fade-up">
+      <h3>How a Winning Hand Works</h3>
+      <p>A standard winning hand consists of 4 sets and 1 pair — 14 tiles total (13 held + 1 winning tile). Sets are built from three tile types: a Chow (three consecutive tiles in the same suit), a Pung (three identical tiles), or a Kong (four identical tiles, declared immediately and supplemented by a bonus draw). The pair must be two matching tiles. Most Chinese rule sets require exactly this 4+1 structure, though special hand exceptions exist in some systems.</p>
+<div class="hand-display">
+  <span class="hand-display-label">Example winning hand — 4 sets + 1 pair = 14 tiles</span>
+  <div class="hand-display-row">
+    <div>
+      <div class="hand-set">
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">3</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">4</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">5</small></div>
+      </div>
+      <span class="hand-set-label">Chow</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">7</small></div>
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">7</small></div>
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">7</small></div>
+      </div>
+      <span class="hand-set-label">Pung</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile crak">万<br><small style="font-size:0.45rem">2</small></div>
+        <div class="tile crak">万<br><small style="font-size:0.45rem">3</small></div>
+        <div class="tile crak">万<br><small style="font-size:0.45rem">4</small></div>
+      </div>
+      <span class="hand-set-label">Chow</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile wind">東<br><small style="font-size:0.45rem;font-weight:400;color:var(--dust)">E</small></div>
+        <div class="tile wind">東<br><small style="font-size:0.45rem;font-weight:400;color:var(--dust)">E</small></div>
+        <div class="tile wind">東<br><small style="font-size:0.45rem;font-weight:400;color:var(--dust)">E</small></div>
+      </div>
+      <span class="hand-set-label">Pung</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile dragon-r">中</div>
+        <div class="tile dragon-r">中</div>
+      </div>
+      <span class="hand-set-label">Pair</span>
+    </div>
+  </div>
+</div>
+    </div>
+
+    <!-- 4. Key Rules -->
+    <div class="variant-block fade-up">
+      <h3>Key Rules</h3>
+      <div class="rule-blocks">
+        <div class="rule-block">
+          <h5>Chow (吃) — Consecutive claim, positional only</h5>
+          <p>A Chow completes a run of three consecutive tiles in the same suit. You may only claim a Chow from the player directly to your left — not from any other player at the table.</p>
+          <div class="tile-illus">
+            <div class="tile bam">🎋<br><small style="font-size:0.45rem">3</small></div>
+            <div class="tile bam">🎋<br><small style="font-size:0.45rem">4</small></div>
+            <div class="tile bam">🎋<br><small style="font-size:0.45rem">5</small></div>
+            <span class="tile-illus-caption">Three consecutive tiles in the same suit</span>
+          </div>
+          <span class="rule-tag rt-common">Common Rule</span>
+        </div>
+        <div class="rule-block">
+          <h5>Pung (碰) & Kong (槓) — From any player</h5>
+          <p>A Pung — three identical tiles — can be claimed from any player's discard. A Kong — four identical tiles — must be declared the moment it is completed and earns a bonus draw from the dead wall.</p>
+          <div class="tile-illus">
+            <div class="tile dot">⬤<br><small style="font-size:0.45rem">7</small></div>
+            <div class="tile dot">⬤<br><small style="font-size:0.45rem">7</small></div>
+            <div class="tile dot">⬤<br><small style="font-size:0.45rem">7</small></div>
+            <span class="tile-illus-label">Pung — 3 identical</span>
+            <div class="tile-sep">·</div>
+            <div class="tile crak">万<br><small style="font-size:0.45rem">9</small></div>
+            <div class="tile crak">万<br><small style="font-size:0.45rem">9</small></div>
+            <div class="tile crak">万<br><small style="font-size:0.45rem">9</small></div>
+            <div class="tile crak">万<br><small style="font-size:0.45rem">9</small></div>
+            <span class="tile-illus-label">Kong — 4 identical</span>
+          </div>
+          <span class="rule-tag rt-common">Common Rule</span>
+        </div>
+        <div class="rule-block">
+          <h5>Self-draw win (自摸 / Zì mō)</h5>
+          <p>Winning by drawing your own tile means all three opponents each pay you individually — making it far more valuable than winning from a discard, where typically only the discarder pays.</p>
+          <span class="rule-tag rt-hk">HK-Style</span>
+        </div>
+        <div class="rule-block">
+          <h5>Concealed hand bonus</h5>
+          <p>Winning with a fully concealed hand — no exposed sets — earns a significant scoring multiplier in most rule systems. This rewards patience and careful tile management over speed.</p>
+          <span class="rule-tag rt-common">Common Rule</span>
+        </div>
+        <div class="rule-block">
+          <h5>Flower tiles (bonus draw)</h5>
+          <p>When drawn, a Flower or Season tile is immediately revealed and set aside. You draw a replacement from the dead wall. Flowers score bonus points but do not contribute to hand structure.</p>
+          <span class="rule-tag rt-house">House-Rule Dependent</span>
+        </div>
+        <div class="rule-block">
+          <h5>Scoring varies by regional rule set</h5>
+          <p>Hong Kong, Sichuan, MCR (Mahjong Competition Rules), and Riichi each use fundamentally different scoring systems. Establish which rule set is in play before a session — the point values, fan requirements, and payment structures are not interchangeable.</p>
+          <div class="tile-illus">
+            <div class="tile dragon-r">中</div>
+            <div class="tile dragon-g">發</div>
+            <div class="tile dragon-w">白</div>
+            <span class="tile-illus-caption">Red · Green · White — Honor tiles, never in Chows</span>
+          </div>
+          <span class="rule-tag rt-hk">HK-Style</span><span class="rule-tag rt-mcr">MCR</span><span class="rule-tag rt-sichuan">Sichuan</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Common Mistakes -->
+    <div class="variant-block fade-up">
+      <h3>Common Mistakes</h3>
+      <div class="mistakes-stack">
+        <div class="mistake-item">
+          <strong>Trying to Chow from any player</strong>
+          <p>Chows are restricted to the discard of the player directly to your left. Pungs and Kongs can be claimed from anyone, but Chow is positional.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Forgetting to declare a Kong immediately</strong>
+          <p>When you complete a Kong — by drawing a fourth matching tile or adding to an exposed Pung — you must declare it right away. Holding four identical tiles silently is not permitted and forfeits the bonus draw.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Undervaluing a concealed hand</strong>
+          <p>New players often expose sets for speed. In most Chinese rule systems, a concealed win earns a multiplier that can dramatically outpace an exposed hand — patience is often the higher-value play.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Discarding without reading the discard pile</strong>
+          <p>The discard pile is a live map of what tiles are no longer available. Feeding a tile that completes an opponent's hand is the game's most avoidable mistake — and the most punishing.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Quiz CTA -->
+    <div class="variant-cta fade-up">
+      <p>Test your Chinese Mahjong knowledge with a quick drill</p>
+      <a href="#flashcards" class="btn-solid">Practice Chinese Drills →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  TAIWANESE MAHJONG — Explore Page
+══════════════════════════════════════ -->
+<section id="taiwanese" class="variant-section" style="background: var(--teal-pale);">
+  <div class="variant-inner grain">
+
+    <!-- 1. Header -->
+    <div class="variant-header fade-up">
+      <span class="label" style="color: var(--olive)">Taiwanese Mahjong</span>
+      <h2>Louder. Longer.<br>Deeply Social.</h2>
+      <p>Taiwanese Mahjong is not a simplified Chinese variant — it is a fully distinct system with its own hand size, scoring logic, and social customs. Played with 16-tile hands and a tenpai payment structure that rewards near-completion, it is simultaneously more forgiving and more consequential than its Chinese counterpart.</p>
+      <div class="trait-row">
+        <span class="trait">144 Tiles</span>
+        <span class="trait">16-Tile Hands</span>
+        <span class="trait">Tenpai Payments</span>
+        <span class="trait">Fang Pao</span>
+      </div>
+    </div>
+
+    <!-- 2. Tile Set -->
+    <div class="variant-block fade-up">
+      <h3>The Tile Set</h3>
+      <p>Taiwanese Mahjong uses 144 tiles: the standard 136-tile base (Bamboo, Characters, Dots, Winds, Dragons) plus 8 Flower and Season bonus tiles. There are no Joker tiles.</p>
+      <p>Each player begins with 16 tiles — three more than in Chinese Mahjong's standard 13. The larger hand creates more possible combinations and generally longer, more layered sessions. Flower and Season tiles are drawn and set aside immediately for bonus points, with a replacement drawn from the dead wall.</p>
+    </div>
+
+    <!-- 3. Hand Structure -->
+    <div class="variant-block fade-up">
+      <h3>How a Winning Hand Works</h3>
+      <p>A winning hand in Taiwanese Mahjong consists of 5 sets and 1 pair — 16 tiles total (the 16-tile starting hand includes the winning tile). Sets follow the same logic as Chinese Mahjong: Chows (three consecutive suited tiles), Pungs (three identical tiles), and Kongs (four identical tiles). The pair must be two matching tiles. The added 5th set — compared to Chinese Mahjong's 4+1 — reflects the larger hand size and adds more strategic latitude.</p>
+<div class="hand-display">
+  <span class="hand-display-label">Example winning hand — 5 sets + 1 pair = 17 tiles (16-tile hand)</span>
+  <div class="hand-display-row">
+    <div>
+      <div class="hand-set">
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">1</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">2</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">3</small></div>
+      </div>
+      <span class="hand-set-label">Chow</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">4</small></div>
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">5</small></div>
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">6</small></div>
+      </div>
+      <span class="hand-set-label">Chow</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile crak">万<br><small style="font-size:0.45rem">8</small></div>
+        <div class="tile crak">万<br><small style="font-size:0.45rem">8</small></div>
+        <div class="tile crak">万<br><small style="font-size:0.45rem">8</small></div>
+      </div>
+      <span class="hand-set-label">Pung</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile wind">南<br><small style="font-size:0.45rem;font-weight:400;color:var(--dust)">S</small></div>
+        <div class="tile wind">南<br><small style="font-size:0.45rem;font-weight:400;color:var(--dust)">S</small></div>
+        <div class="tile wind">南<br><small style="font-size:0.45rem;font-weight:400;color:var(--dust)">S</small></div>
+      </div>
+      <span class="hand-set-label">Pung</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">7</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">8</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">9</small></div>
+      </div>
+      <span class="hand-set-label">Chow</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile dragon-g">發</div>
+        <div class="tile dragon-g">發</div>
+      </div>
+      <span class="hand-set-label">Pair</span>
+    </div>
+  </div>
+</div>
+    </div>
+
+    <!-- 4. Key Rules -->
+    <div class="variant-block fade-up">
+      <h3>Key Rules</h3>
+      <div class="rule-blocks">
+        <div class="rule-block">
+          <h5>16-tile hand structure</h5>
+          <p>Each player holds 16 tiles at all times (before winning). This is 3 more than standard Chinese Mahjong. The result is a slower, more complex game with more viable hand directions at any given moment.</p>
+          <span class="rule-tag rt-tw">Taiwanese 16-Tile</span>
+        </div>
+        <div class="rule-block">
+          <h5>Chow restriction — still positional</h5>
+          <p>Despite the larger hand and some structural differences, Chow claims remain restricted to the next player in turn order — the same rule as Chinese Mahjong. Any player may claim a discard to win (Hu), Pung, or Kong, but only the player whose turn comes next may call Chow.</p>
+          <span class="rule-tag rt-common">Common Rule</span>
+        </div>
+        <div class="rule-block">
+          <h5>Tenpai payments at round end</h5>
+          <p>If the wall runs out without anyone winning, players in tenpai (one tile from winning) receive a payment from each player who is not in tenpai. This means pursuing tenpai has value even when a full win seems out of reach.</p>
+          <span class="rule-tag rt-tw">Taiwanese 16-Tile</span>
+        </div>
+        <div class="rule-block">
+          <h5>Fang Pao (放炮) — discarder pays alone</h5>
+          <p>When you deal into an opponent's winning hand, you pay the full winning amount by yourself. Unlike many Chinese variants where all players share the payout, Fang Pao places full financial responsibility on the discarder — making every late-game discard a high-stakes decision.</p>
+          <span class="rule-tag rt-tw">Taiwanese 16-Tile</span>
+        </div>
+        <div class="rule-block">
+          <h5>Flower / Season tile handling</h5>
+          <p>Flower and Season tiles are drawn and immediately set aside face-up. A replacement tile is drawn from the dead wall. They contribute bonus tái to your score when you win but are not part of the hand structure.</p>
+          <div class="tile-illus">
+            <div class="tile flower">🌸</div>
+            <div class="tile flower" style="font-size:0.9rem">🍂</div>
+            <div class="tile flower">🌺</div>
+            <div class="tile flower" style="font-size:0.9rem">❄</div>
+            <span class="tile-illus-caption">Drawn → set aside face-up → draw replacement from dead wall</span>
+          </div>
+          <span class="rule-tag rt-tw">Taiwanese 16-Tile</span>
+        </div>
+        <div class="rule-block">
+          <h5>Tái (台) scoring units</h5>
+          <p>Winning hands are evaluated in tái — scoring units agreed upon before the game. Each hand has a base tái value; specific patterns, bonus tiles, and conditions add more. Payment = total tái × the agreed per-tái value. House rules vary widely on minimum tái requirements to win.</p>
+          <span class="rule-tag rt-tw">Taiwanese 16-Tile</span><span class="rule-tag rt-house">House-Rule Dependent</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Common Mistakes -->
+    <div class="variant-block fade-up">
+      <h3>Common Mistakes</h3>
+      <div class="mistakes-stack">
+        <div class="mistake-item">
+          <strong>Assuming any player can Chow</strong>
+          <p>This is the most common cross-variant confusion. Chow is restricted to the next player in turn order in Taiwanese Mahjong — the same rule as Chinese. Only Hu, Pung, and Kong are open to all players.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Abandoning tenpai when winning seems unlikely</strong>
+          <p>Tenpai pays at round end even if someone else wins first. Staying in tenpai — even with no clear win path — still earns you a payment from every non-tenpai player.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Underestimating Fang Pao risk on late discards</strong>
+          <p>In the late game, when multiple players are likely approaching tenpai, every discard carries Fang Pao risk. Discarding without reading the board at this stage is how sessions are lost.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Miscounting in a 16-tile hand</strong>
+          <p>Players transitioning from Chinese Mahjong frequently miscount. A valid 16-tile Taiwanese hand needs 5 sets + 1 pair. If you're trying to win with 4 sets + 1 pair, your hand is incomplete.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Quiz CTA -->
+    <div class="variant-cta fade-up">
+      <p>Test your Taiwanese Mahjong knowledge with a quick drill</p>
+      <a href="#flashcards" class="btn-teal">Practice Taiwanese Drills →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  AMERICAN MAHJONG — Explore Page
+══════════════════════════════════════ -->
+<section id="american" class="variant-section" style="background: var(--olive-pale);">
+  <div class="variant-inner grain">
+
+    <!-- 1. Header -->
+    <div class="variant-header fade-up">
+      <span class="label" style="color: var(--teal)">American Mahjong</span>
+      <h2>A Reinvention.<br>On Its Own Terms.</h2>
+      <p>American Mahjong arrived in the 1920s and evolved into something genuinely distinct — not a simplified Chinese variant, but a parallel game with its own structure, wild tiles, annual hand card, and passing ritual. It is one of the most socially embedded games in American Jewish and broader social culture, with millions of active players. Understanding it requires setting aside the traditional 4+1 framework entirely.</p>
+      <div class="trait-row">
+        <span class="trait">152 Tiles</span>
+        <span class="trait">8 Jokers</span>
+        <span class="trait">NMJL Card</span>
+        <span class="trait">The Charleston</span>
+      </div>
+    </div>
+
+    <!-- 2. Tile Set -->
+    <div class="variant-block fade-up">
+      <h3>The Tile Set</h3>
+      <p>An American Mahjong set contains 152 tiles: the standard 144-tile base (Bamboo, Characters, Dots, Winds, Dragons, Flowers/Seasons) plus 8 Joker tiles. The Jokers are the single most strategically significant element of the game — and the element most unlike any other Mahjong variant.</p>
+      <p>Jokers can substitute for any suited tile in a set of three or more identical tiles. They cannot form pairs. When a Joker is in an exposed set, any player holding the actual tile it represents may swap it out on their turn and claim the Joker for their own hand.</p>
+    </div>
+
+    <!-- 3. Hand Structure -->
+    <div class="variant-block fade-up">
+      <h3>How a Winning Hand Works</h3>
+      <p>American Mahjong does not use the traditional 4 sets + 1 pair structure. Winning hands are defined exclusively by the current year's NMJL card — a published list of valid hand patterns that changes annually. Hands may require specific combinations of Pungs, Kongs, Quints (five identical tiles using Jokers), pairs, singles, and runs as defined on the card. You cannot invent hands. You cannot use hands from previous years' cards. The card is the game.</p>
+<div class="hand-display">
+  <span class="hand-display-label">Example NMJL hand pattern — 1s and Flowers</span>
+  <div class="hand-display-row">
+    <div>
+      <div class="hand-set">
+        <div class="tile flower">🌸</div>
+        <div class="tile flower">🌸</div>
+        <div class="tile joker">JOKER</div>
+        <div class="tile joker">JOKER</div>
+      </div>
+      <span class="hand-set-label">Kong (2 Jokers)</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">1</small></div>
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">1</small></div>
+        <div class="tile dot">⬤<br><small style="font-size:0.45rem">1</small></div>
+      </div>
+      <span class="hand-set-label">Pung</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">1</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">1</small></div>
+        <div class="tile bam">🎋<br><small style="font-size:0.45rem">1</small></div>
+      </div>
+      <span class="hand-set-label">Pung</span>
+    </div>
+    <span class="tile-plus">+</span>
+    <div>
+      <div class="hand-set">
+        <div class="tile crak">万<br><small style="font-size:0.45rem">1</small></div>
+        <div class="tile crak">万<br><small style="font-size:0.45rem">1</small></div>
+      </div>
+      <span class="hand-set-label">Pair</span>
+    </div>
+  </div>
+</div>
+    </div>
+
+    <!-- 4. Key Rules -->
+    <div class="variant-block fade-up">
+      <h3>Key Rules</h3>
+      <div class="rule-blocks">
+        <div class="rule-block">
+          <h5>The Charleston — mandatory tile exchange</h5>
+          <p>Before the first draw, all players pass three tiles to the right, then three across, then three to the left. A second Charleston may follow. This pre-hand ritual shapes strategy before a single tile is drawn and is unique to American Mahjong.</p>
+          <div class="tile-illus">
+            <span class="tile-illus-label" style="margin-bottom:0.5rem;width:100%">The Charleston — 3 mandatory passes</span>
+            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
+              <div style="text-align:center">
+                <div style="font-size:0.65rem;color:var(--t3);font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:0.1em;text-transform:uppercase">Pass 1</div>
+                <div style="font-size:0.78rem;color:var(--t1);margin-top:0.2rem">3 tiles → Right</div>
+              </div>
+              <span style="color:var(--dust)">→</span>
+              <div style="text-align:center">
+                <div style="font-size:0.65rem;color:var(--t3);font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:0.1em;text-transform:uppercase">Pass 2</div>
+                <div style="font-size:0.78rem;color:var(--t1);margin-top:0.2rem">3 tiles → Across</div>
+              </div>
+              <span style="color:var(--dust)">→</span>
+              <div style="text-align:center">
+                <div style="font-size:0.65rem;color:var(--t3);font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:0.1em;text-transform:uppercase">Pass 3</div>
+                <div style="font-size:0.78rem;color:var(--t1);margin-top:0.2rem">3 tiles → Left</div>
+              </div>
+            </div>
+            <span class="tile-illus-caption">Then optionally repeat. Unique to American Mahjong.</span>
+          </div>
+          <span class="rule-tag rt-nmjl">NMJL</span>
+        </div>
+        <div class="rule-block">
+          <h5>Joker rules — substitute, not wild</h5>
+          <p>Jokers substitute only in sets of three or more identical tiles (Pungs, Kongs, Quints). They cannot be used in pairs, runs, or singles. A Joker in an exposed set can be claimed by any player who places the real matching tile in its position — on their turn.</p>
+          <div class="tile-illus">
+            <div class="tile dot">⬤<br><small style="font-size:0.45rem">3</small></div>
+            <div class="tile dot">⬤<br><small style="font-size:0.45rem">3</small></div>
+            <div class="tile joker">JOKER</div>
+            <span class="tile-illus-caption">Joker substitutes in a Pung — valid ✓</span>
+          </div>
+          <div class="tile-illus" style="margin-top:0.5rem">
+            <div class="tile dragon-r">中</div>
+            <div class="tile joker">JOKER</div>
+            <span class="tile-illus-caption">Joker in a pair — NOT valid</span>
+            <span style="font-size:1.2rem;color:var(--terra);margin-left:0.5rem;align-self:center">✗</span>
+          </div>
+          <span class="rule-tag rt-nmjl">NMJL</span>
+        </div>
+        <div class="rule-block">
+          <h5>Exposures and calling tiles</h5>
+          <p>When you claim a discard to complete an exposed set, you must call it clearly and immediately place the set face-up on your side of the table. You must also discard a tile to maintain the correct hand count. Exposures reveal your hand direction — choose them deliberately.</p>
+          <span class="rule-tag rt-nmjl">NMJL</span>
+        </div>
+        <div class="rule-block">
+          <h5>No Chows in the traditional sense</h5>
+          <p>American Mahjong does not use the Chow (consecutive run) mechanic as a claimable set type. Hand patterns — including any runs that may appear — are defined by the NMJL card and claimed only in the context of completing a valid card hand.</p>
+          <span class="rule-tag rt-nmjl">NMJL</span>
+        </div>
+        <div class="rule-block">
+          <h5>Wall game — no payment, hand replayed</h5>
+          <p>If all tiles are drawn and no one wins, the hand is a wall game. No money changes hands and the hand is redealt. This differs from Taiwanese Mahjong, where tenpai players receive payments from non-tenpai players at round end.</p>
+          <span class="rule-tag rt-nmjl">NMJL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. NMJL Card Explainer (American only) -->
+    <div class="variant-block fade-up">
+      <h3>The Annual NMJL Card</h3>
+      <div class="nmjl-callout">
+        <h4>The single most important element of American Mahjong</h4>
+        <p>Each year, the National Mah Jongg League publishes a new card listing all valid winning hands for that year. To win, your hand must exactly match one of the hands on the current card — tile for tile, set for set. Hands from prior years are no longer valid once the new card is released.</p>
+        <p>The card typically lists 50–60 hands organized into categories. Each hand specifies the exact tile types, quantities, and structure required. Some hands are worth more than others (singles vs. doubles), and some require specific suits or honor tiles. None can be substituted or approximated.</p>
+        <p>New cards are typically released in late March or early April. Serious players study the new card before the season begins — memorizing available hands, identifying which suit patterns work given your tiles, and tracking which hands opponents may be building from their exposures.</p>
+        <p>Card memorization is a skill in its own right. Players who know the card deeply can play faster, read opponents more accurately, and make better discard decisions throughout the hand.</p>
+      </div>
+    </div>
+
+    <!-- 6. Common Mistakes -->
+    <div class="variant-block fade-up">
+      <h3>Common Mistakes</h3>
+      <div class="mistakes-stack">
+        <div class="mistake-item">
+          <strong>Trying to use a Joker in a pair</strong>
+          <p>Jokers can only substitute in sets of three or more identical tiles. A pair must be two real matching tiles. This is one of the most frequently misremembered rules, especially for new players.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Not studying the current year's NMJL card</strong>
+          <p>Playing American Mahjong without knowing the current card is like playing poker without knowing which hands beat which. The card changes every year — what won last season may not be valid this season.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Exposing sets too early</strong>
+          <p>Every exposure reveals part of your intended hand to all other players. Skilled opponents will adjust their discards accordingly. Expose only when necessary — and be aware of what your exposures communicate.</p>
+        </div>
+        <div class="mistake-item">
+          <strong>Forgetting that Jokers in exposed sets can be taken</strong>
+          <p>Any player holding the actual tile that a Joker represents can swap it out of your exposed set on their turn. Hands built heavily on exposed Jokers are vulnerable. Always track where your Jokers are sitting.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Quiz CTA -->
+    <div class="variant-cta fade-up">
+      <p>Test your American Mahjong knowledge with a quick drill</p>
+      <a href="#flashcards" class="btn-olive">Practice American Drills →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════ TILES ══════ -->
+<section id="tiles" class="grain">
+  <div class="tiles-header">
+    <div class="tiles-header-left fade-up">
+      <span class="label" style="color:var(--stone)">The Tile Families</span>
+      <h2>Learn to read<br>the table.</h2>
+    </div>
+    <div class="tiles-header-right fade-up d2">
+      <p>Every Mahjong set is built from the same core tile families. Understanding what each tile is, and what it means, is step one.</p>
+      <p>American Mahjong adds one element no other variant uses: the <strong>Joker tile</strong>—a wild card that can substitute for any suited tile in a valid hand, making it the most powerful and most contested tile on the table.</p>
+    </div>
+  </div>
+  <div class="tiles-families fade-up">
+    <div class="tile-fam"><span class="tile-fam-icon">🎋</span><h4>Bamboo (Bam)</h4><p>Tiles 1–9, depicted with bamboo stalks. The 1-Bam traditionally features a bird or peacock. One of the three numbered suits.</p></div>
+    <div class="tile-fam"><span class="tile-fam-icon">万</span><h4>Characters (Crak)</h4><p>Tiles 1–9, marked with Chinese number characters and a red 万 symbol. Bold and immediately recognizable.</p></div>
+    <div class="tile-fam"><span class="tile-fam-icon">⭕</span><h4>Dots (Circle)</h4><p>Tiles 1–9, represented by circles or coin-like discs. The third numbered suit. Clean and geometric.</p></div>
+    <div class="tile-fam"><span class="tile-fam-icon">🧭</span><h4>Winds</h4><p>Four Honor tiles: East 東, South 南, West 西, North 北. They form Pungs and Kongs, never Chows.</p></div>
+    <div class="tile-fam"><span class="tile-fam-icon">🀄</span><h4>Dragons</h4><p>Three Honor tiles: Red (中), Green (發), White (白). High-scoring in most variants when collected in sets of three.</p></div>
+    <div class="tile-fam"><span class="tile-fam-icon">🌸</span><h4>Flowers & Seasons</h4><p>Bonus tiles in Chinese and Taiwanese variants. Drawn and immediately set aside—they score points but don't count toward hand structure.</p></div>
+    <div class="tile-fam span2"><span class="tile-fam-icon" style="color:var(--terra)">★</span><h4><span class="joker-callout">Joker</span> — American Mahjong Only</h4><p>Eight wild tiles. A Joker can stand in for any suited tile in a set of three or more identical tiles. It cannot form a pair. If exposed, any player holding the matching tile can swap it out—making Joker management one of the most strategic elements in the game.</p></div>
+  </div>
+  <div class="tiles-visual fade-up">
+    <span class="label" style="color:var(--stone);margin-bottom:1.5rem;display:block">Sample tiles — hover to examine</span>
+    <div class="tile-row">
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile bam">🎋<br><small style="font-size:0.5rem">1</small></div><div class="tile bam">🎋<br><small style="font-size:0.5rem">5</small></div><div class="tile bam">🎋<br><small style="font-size:0.5rem">9</small></div></div><span class="tile-lbl">Bamboo</span></div>
+      <div class="tile-sep">·</div>
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile crak">万<br><small style="font-size:0.5rem">1</small></div><div class="tile crak">万<br><small style="font-size:0.5rem">5</small></div><div class="tile crak">万<br><small style="font-size:0.5rem">9</small></div></div><span class="tile-lbl">Character</span></div>
+      <div class="tile-sep">·</div>
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile dot">⬤<br><small style="font-size:0.5rem">1</small></div><div class="tile dot">⬤<br><small style="font-size:0.5rem">5</small></div><div class="tile dot">⬤<br><small style="font-size:0.5rem">9</small></div></div><span class="tile-lbl">Dot</span></div>
+      <div class="tile-sep">·</div>
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile wind">東<br><small style="font-size:0.5rem;font-weight:400;letter-spacing:0.05em;color:var(--dust)">E</small></div><div class="tile wind">南<br><small style="font-size:0.5rem;font-weight:400;letter-spacing:0.05em;color:var(--dust)">S</small></div><div class="tile wind">西<br><small style="font-size:0.5rem;font-weight:400;letter-spacing:0.05em;color:var(--dust)">W</small></div><div class="tile wind">北<br><small style="font-size:0.5rem;font-weight:400;letter-spacing:0.05em;color:var(--dust)">N</small></div></div><span class="tile-lbl">Winds</span></div>
+      <div class="tile-sep">·</div>
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile dragon-r">中</div><div class="tile dragon-g">發</div><div class="tile dragon-w">白</div></div><span class="tile-lbl">Dragons</span></div>
+      <div class="tile-sep">·</div>
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile flower">🌸</div><div class="tile flower" style="font-size:1.1rem">🍂</div></div><span class="tile-lbl">Flowers</span></div>
+      <div class="tile-sep">·</div>
+      <div class="tile-group"><div class="tile-group-tiles"><div class="tile joker">JOKER</div></div><span class="tile-lbl" style="color:var(--terra)">Joker*</span></div>
+    </div>
+    <p style="font-size:0.7rem;color:var(--dust);margin-top:0.75rem;font-style:italic">*Jokers appear exclusively in American Mahjong sets.</p>
+  </div>
+</section>
+
+<!-- ══════ STRATEGY — the one dark section ══════ -->
+<section id="strategy">
+  <div class="strategy-grid sec-inner">
+    <div class="strategy-sidebar fade-up">
+      <span class="label-dark">Play Smarter</span>
+      <h2>Strategy &amp;<br>Fundamentals</h2>
+      <p>Good Mahjong is part memory, part math, and part psychology. These principles apply whether you're playing at a kitchen table in Brooklyn or a game room in Taipei.</p>
+      <blockquote>
+        <p>"A player who chases every hand wins none of them."</p>
+        <cite>— Common Mahjong proverb</cite>
+      </blockquote>
+      <a href="#flashcards" class="btn-ghost-dark">Practice with Drills</a>
+    </div>
+    <div class="tips-stack">
+      <div class="tip fade-up"><span class="tip-n">01</span><div class="tip-body"><h4>Build toward a hand, not away from one</h4><p>The most common beginner mistake is discarding reactively—defending against opponents instead of pursuing your own winning hand. Pick a structure early. Commit. A focused incomplete hand usually beats a scattered defensive one.</p><span class="tip-tag tag-all">All Variants</span></div></div>
+      <div class="tip fade-up d1"><span class="tip-n">02</span><div class="tip-body"><h4>Watch the discards like a map</h4><p>The discard pile is a live record of what's no longer in play. Tiles opponents toss early tell you what they don't need. Tiles they stop discarding tell you what they're building. Read both signals continuously.</p><span class="tip-tag tag-all">All Variants</span></div></div>
+      <div class="tip fade-up d2"><span class="tip-n">03</span><div class="tip-body"><h4>Understand tile density</h4><p>There are four of every numbered tile. As tiles leave the table, your mental map of what's live changes in real time. Tracking the count isn't cheating—it's the game.</p><span class="tip-tag tag-all">All Variants</span></div></div>
+      <div class="tip fade-up"><span class="tip-n">04</span><div class="tip-body"><h4>American: the Joker trap</h4><p>Jokers can be swapped out of exposed sets. Hands that rely entirely on Jokers are vulnerable. Build locked pairs—Jokers can't make those—so your hand has structural protection.</p><span class="tip-tag tag-amer">American</span></div></div>
+      <div class="tip fade-up d1"><span class="tip-n">05</span><div class="tip-body"><h4>Taiwanese: don't abandon tenpai</h4><p>Reaching tenpai earns a payment from non-tenpai players at round end—even if someone else wins first. A near-complete hand is still worth something.</p><span class="tip-tag tag-tw">Taiwanese</span></div></div>
+      <div class="tip fade-up d2"><span class="tip-n">06</span><div class="tip-body"><h4>Know which game you're playing</h4><p>A hand that wins in Chinese Mahjong may not be valid in American. The winning conditions across all three traditions are genuinely different. The rules are not interchangeable.</p><span class="tip-tag tag-all">All Variants</span></div></div>
+      <div class="tip fade-up"><span class="tip-n">07</span><div class="tip-body"><h4>Chinese: concealed hands score more</h4><p>In most Chinese Mahjong variants, winning with a fully concealed hand earns a significant scoring bonus. Sometimes the slow, patient hand is the right one.</p><span class="tip-tag tag-cn">Chinese</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ FLASHCARDS ══════ -->
+<section id="flashcards" class="grain">
+  <div class="fc-layout sec-inner">
+    <div class="fc-left fade-up">
+      <span class="label peri">Quick Drills</span>
+      <h2>Build fluency.<br>One tile at a time.</h2>
+      <p>Mahj Mahj drills are fast, focused, and deliberately repetitive. We surface the rules and patterns you need to internalize—and bring them back until they stick.</p>
+      <p>Choose your answer before seeing the result. Every question gives you feedback and context. Switch decks to cover all three variants.</p>
+      <div class="mode-grid" id="modeGrid">
+        <div class="mode-btn active" onclick="setMode('american',this)"><span class="mode-btn-icon">🀄</span><span class="mode-btn-name">American</span><span class="mode-btn-count">8 cards</span></div>
+        <div class="mode-btn" onclick="setMode('chinese',this)"><span class="mode-btn-icon">🀇</span><span class="mode-btn-name">Chinese</span><span class="mode-btn-count">8 cards</span></div>
+        <div class="mode-btn" onclick="setMode('taiwanese',this)"><span class="mode-btn-icon">🀙</span><span class="mode-btn-name">Taiwanese</span><span class="mode-btn-count">8 cards</span></div>
+      </div>
+    </div>
+    <div class="fc-right fade-up d2">
+      <!-- Progress bar -->
+      <div class="fc-prog">
+        <div class="fc-prog-bar"><div class="fc-prog-fill" id="progFill" style="width:12.5%"></div></div>
+        <span class="fc-prog-txt" id="progTxt">1 / 8</span>
+      </div>
+
+      <!-- Mastery dots — 8 dots, one per card in current deck -->
+      <div class="mastery-dots" id="masteryDots"></div>
+
+      <!-- Question card — single face, no flip -->
+      <div class="quiz-card">
+        <p class="quiz-q" id="quizQ">Loading...</p>
+      </div>
+
+      <!-- Three answer choices -->
+      <div class="quiz-choices" id="quizChoices">
+        <button class="quiz-choice" id="choice0" onclick="selectAnswer(0)"></button>
+        <button class="quiz-choice" id="choice1" onclick="selectAnswer(1)"></button>
+        <button class="quiz-choice" id="choice2" onclick="selectAnswer(2)"></button>
+      </div>
+
+      <!-- Explanation — hidden until answer selected -->
+      <div class="quiz-expl" id="quizExpl" style="display:none"></div>
+
+      <!-- Next button — hidden until answer selected -->
+      <button class="quiz-next" id="quizNext" onclick="nextQuestion()" style="display:none">Next →</button>
+
+      <!-- Score display -->
+      <div class="fc-scores">
+        <div><span class="fc-score-n green" id="sCorrect">0</span><span class="fc-score-l">Correct</span></div>
+        <div><span class="fc-score-n" id="sSeen">0</span><span class="fc-score-l">Seen</span></div>
+        <div><span class="fc-score-n" id="sLeft">8</span><span class="fc-score-l">Remaining</span></div>
+      </div>
+
+      <!-- Reset mastery progress -->
+      <button class="reset-progress" onclick="resetMastery()">Reset Progress</button>
+    </div>
+  </div>
+</section>
+</body></html>
