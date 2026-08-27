@@ -801,6 +801,7 @@ input,select{font-family:inherit}
   var STORAGE_KEY = 'mahj_user_profile';
   var ONBOARD_KEY = 'mahj_onboarded';
   var FAVS_KEY    = 'mahj_saved_v1';
+  var CAPTURE_KEY = 'mahj_email_capture';
   var LEGACY_URL  = '/legacy.html';
   var API_BASE    = 'https://api.mahjmahj.co/api';
 
@@ -848,6 +849,54 @@ input,select{font-family:inherit}
   }
   function isOnboarded(){
     try { return localStorage.getItem(ONBOARD_KEY) === '1'; } catch(e){ return false; }
+  }
+
+  // ---------- Email capture transmission ----------
+  // The onboarding email field used to only call saveProfile() (localStorage,
+  // device-only, never sent anywhere). This sends it to the app's own
+  // same-origin serverless function (api/subscribe-email.js), which relays it
+  // server-to-server to the real newsletter pipeline. Fire-and-forget: never
+  // blocks onboarding, never shows an error to the user. A failed attempt is
+  // left flagged 'pending' in localStorage and retried on the next app launch.
+  function getCaptureState(){
+    try { return JSON.parse(localStorage.getItem(CAPTURE_KEY)) || null; }
+    catch(e){ return null; }
+  }
+  function saveCaptureState(state){
+    try { localStorage.setItem(CAPTURE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function transmitEmailCapture(email, city){
+    email = (email || '').trim();
+    if (!email) return;
+    var prior = getCaptureState();
+    var state = {
+      email: email,
+      city: city || '',
+      status: 'pending',
+      attempts: ((prior && prior.email === email) ? (prior.attempts || 0) : 0) + 1,
+      lastAttempt: Date.now()
+    };
+    saveCaptureState(state);
+    fetch('/api/subscribe-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, city: city || '' })
+    }).then(function(res){
+      if (res && res.ok){
+        state.status = 'sent';
+        saveCaptureState(state);
+      }
+      // Non-OK response: leave status 'pending' so retryPendingEmailCapture()
+      // tries again on the next launch. No UI feedback either way.
+    }).catch(function(){
+      // Network error (e.g. offline during onboarding): leave 'pending'.
+    });
+  }
+  function retryPendingEmailCapture(){
+    var state = getCaptureState();
+    if (state && state.status === 'pending' && state.email){
+      transmitEmailCapture(state.email, state.city);
+    }
   }
 
   // ---------- Favorites ----------
@@ -1180,6 +1229,7 @@ input,select{font-family:inherit}
     p.email = (emailEl.value || '').trim();
     p.city  = cityEl.value || '';
     saveProfile(p);
+    transmitEmailCapture(p.email, p.city);
     goScreen2();
   });
 
@@ -1452,6 +1502,7 @@ input,select{font-family:inherit}
 
   // ---------- Init ----------
   applyProfileToHome();
+  retryPendingEmailCapture();
   if (!isOnboarded()){
     showOnboarding();
   } else {
